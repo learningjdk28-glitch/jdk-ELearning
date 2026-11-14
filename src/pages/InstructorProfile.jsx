@@ -7,7 +7,7 @@ import { adminSummary, courseMetrics, listManagedCourses } from '../services/lms
 import { addAdminEmail, listAdminEmails, removeAdminEmail } from '../services/profile.js';
 import { Callout } from '../components/ui.jsx';
 import { Metric, Status } from '../components/AdminUI.jsx';
-import { DetailsForm, Loading, PasswordSection, ProfileHeader, Result, Section, useAction, useMyProfile } from '../components/ProfileSections.jsx';
+import { AppearanceSection, DetailsForm, Loading, PasswordSection, ProfileHeader, Result, Section, useAction, useMyProfile } from '../components/ProfileSections.jsx';
 
 /** Instructor profile: identity, contact details, what they teach, and (super administrator) who may teach. */
 export default function InstructorProfile() {
@@ -50,6 +50,8 @@ export default function InstructorProfile() {
         {isSuperAdmin && <AdminAccess online={online} />}
         <PasswordSection online={online} />
       </div>
+
+      {p && <AppearanceSection key={p.id} userId={user.id} profile={p} online={online} onSaved={me.setProfile} />}
     </div>
   );
 }

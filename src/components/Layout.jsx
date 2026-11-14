@@ -9,6 +9,8 @@ import {
   Lightbulb,
   LogOut,
   Menu,
+  Moon,
+  Sun,
   X,
   Route as RouteIcon,
   Settings,
@@ -28,6 +30,8 @@ import { useAuth } from '../context/AuthContext.jsx';
 import useOnline from '../hooks/useOnline.js';
 import ChatWidget from './ChatWidget.jsx';
 import SyncStatus, { useOutbox } from './SyncStatus.jsx';
+import { applyAppearance, currentAppearance, shownMode } from '../lib/applyTheme.js';
+import { saveAppearance } from '../services/profile.js';
 
 const SIDE_LINKS = [
   ['/dashboard', 'Dashboard', Home],
@@ -87,6 +91,27 @@ function SidebarContent({ adminMode, onLogout }) {
         {!adminMode && <p className="mt-4 text-xs text-text-muted">Lessons you open are saved on this device. Work done offline syncs when you reconnect.</p>}
       </div>
     </>
+  );
+}
+
+/** One tap between light and dark. Saved on the profile when online; Profile > Appearance has every option. */
+function ThemeSwitch({ userId, online }) {
+  const [mode, setMode] = useState(shownMode);
+  useEffect(() => {
+    const sync = () => setMode(shownMode());
+    window.addEventListener('jdk-appearance', sync);
+    return () => window.removeEventListener('jdk-appearance', sync);
+  }, []);
+  const toggle = () => {
+    const next = { ...currentAppearance(), theme: mode === 'dark' ? 'light' : 'dark' };
+    applyAppearance(next);
+    if (userId && online) saveAppearance(userId, next).catch(() => { /* kept on this device */ });
+  };
+  return (
+    <button type="button" onClick={toggle} className="w-9 h-9 grid place-items-center rounded-full border border-border bg-surface-raised text-text"
+      aria-label={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} title={mode === 'dark' ? 'Light mode' : 'Dark mode'}>
+      {mode === 'dark' ? <Sun size={17} aria-hidden="true" /> : <Moon size={17} aria-hidden="true" />}
+    </button>
   );
 }
 
@@ -181,6 +206,7 @@ export default function Layout() {
               {online ? <Wifi size={15} aria-hidden="true" /> : <WifiOff size={15} aria-hidden="true" />}
               {online ? 'Online' : 'Offline'}
             </span>
+            <ThemeSwitch userId={user?.id} online={online} />
             <span className="hidden lg:inline text-text-muted truncate max-w-[14rem]">{user?.email}</span>
           </div>
         </header>

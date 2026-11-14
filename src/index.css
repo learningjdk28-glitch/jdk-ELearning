@@ -5,6 +5,7 @@
 /* Theme tokens: the ONLY place colour values live. "R G B" channels (see tailwind.config.js).
    Semantic names only. Dark mode (final phase) redefines these same variables. */
 :root {
+  color-scheme: light;
   --color-surface: 246 245 255;          /* page background */
   --color-surface-raised: 255 255 255;   /* cards, panels, inputs */
   --color-surface-muted: 240 239 255;    /* table headers, progress tracks */
@@ -23,6 +24,21 @@
   --color-danger: 185 28 28;
   --color-overlay: 0 0 0;                /* modal scrims, shadows */
   --color-print-ink: 27 26 61;           /* default text on certificates; dark mode must NOT change it */
+  /* Welcome illustration. Fixed: dark mode does not change them (the art sits on its own light circles). */
+  --color-illo-ink: 28 21 53;
+  --color-illo-paper: 255 255 255;
+  --color-illo-sun: 255 210 122;
+  --color-illo-1: 74 47 217;
+  --color-illo-1-light: 165 151 238;
+  --color-illo-1-mid: 191 180 251;
+  --color-illo-1-soft: 217 210 251;
+  --color-illo-1-tint: 228 223 252;
+  --color-illo-2: 13 122 104;
+  --color-illo-2-light: 127 185 173;
+  --color-illo-2-soft: 159 223 210;
+  --color-illo-2-tint: 220 243 236;
+  --color-illo-3: 241 168 59;
+  --color-illo-3-tint: 255 239 210;
   /* Chart series, in fixed order. Distinct from the status colours above (success/warning/danger).
      Validated for colour-blind separation on white; 3 and 4 are below 3:1 contrast, so charts always show value labels.
      Dark-mode steps (theming phase): 57 135 229 / 217 89 38 / 25 158 112 / 201 133 0. */
@@ -30,6 +46,61 @@
   --color-category-2: 235 104 52;        /* orange */
   --color-category-3: 27 175 122;        /* aqua */
   --color-category-4: 237 161 0;         /* yellow */
+}
+
+/* Dark mode. "Same as this device" follows the system setting unless the user chose light;
+   choosing dark applies it everywhere. Both blocks must stay identical (tests/theme.test.mjs). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-surface: 17 17 27;
+    --color-surface-raised: 28 28 42;      /* = SURFACES.dark in src/lib/theme.js */
+    --color-surface-muted: 38 38 58;
+    --color-surface-inverse: 10 12 26;
+    --color-text: 236 236 245;
+    --color-text-muted: 172 174 198;
+    --color-text-inverse: 255 255 255;
+    --color-text-inverse-muted: 203 213 225;
+    --color-border: 58 60 86;
+    --color-brand: 149 140 232;            /* = brandShades(default brand, 'dark') */
+    --color-brand-strong: 168 161 236;
+    --color-brand-contrast: 17 17 27;
+    --color-brand-soft: 46 45 70;
+    --color-success: 74 222 128;
+    --color-warning: 251 191 36;
+    --color-danger: 248 113 113;
+    --color-overlay: 0 0 0;
+    --color-category-1: 57 135 229;
+    --color-category-2: 217 89 38;
+    --color-category-3: 25 158 112;
+    --color-category-4: 201 133 0;
+    /* print-ink and illo-* are not changed: certificates and the welcome art keep their colours. */
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-surface: 17 17 27;
+  --color-surface-raised: 28 28 42;      /* = SURFACES.dark in src/lib/theme.js */
+  --color-surface-muted: 38 38 58;
+  --color-surface-inverse: 10 12 26;
+  --color-text: 236 236 245;
+  --color-text-muted: 172 174 198;
+  --color-text-inverse: 255 255 255;
+  --color-text-inverse-muted: 203 213 225;
+  --color-border: 58 60 86;
+  --color-brand: 149 140 232;            /* = brandShades(default brand, 'dark') */
+  --color-brand-strong: 168 161 236;
+  --color-brand-contrast: 17 17 27;
+  --color-brand-soft: 46 45 70;
+  --color-success: 74 222 128;
+  --color-warning: 251 191 36;
+  --color-danger: 248 113 113;
+  --color-overlay: 0 0 0;
+  --color-category-1: 57 135 229;
+  --color-category-2: 217 89 38;
+  --color-category-3: 25 158 112;
+  --color-category-4: 201 133 0;
+  /* print-ink and illo-* are not changed: certificates and the welcome art keep their colours. */
 }
 
 body {
@@ -74,9 +145,3 @@ textarea {
   }
 }
 
-@media print {
-  body { background: rgb(var(--color-surface-raised)) !important; }
-  body * { visibility: hidden !important; }
-  #certificate-document, #certificate-document * { visibility: visible !important; }
-  #certificate-document { position: absolute !important; top: 0; left: 0; width: 100%; border: 8px double rgb(var(--color-brand)) !important; box-shadow: none !important; }
-}

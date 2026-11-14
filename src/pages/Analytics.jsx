@@ -47,7 +47,7 @@ export default function Analytics() {
   return (
     <div className="w-full max-w-4xl mx-auto flex flex-col" style={{ minHeight: 'calc(100vh - 11rem)' }}>
       <BackHeader title="Learning analytics assistant" to="/admin" />
-      <p className="text-slate-600 mb-4">
+      <p className="text-text-muted mb-4">
         Ask questions about quiz results and progress. Answers come from read-only, anonymous data: learners appear only as a short code, never by name or email. Results from small groups are a small sample.
       </p>
 
@@ -65,7 +65,7 @@ export default function Analytics() {
       <div className="flex-1 panel p-4 sm:p-5 space-y-3 overflow-y-auto" aria-live="polite" aria-label="Conversation">
         {messages.length === 0 && (
           <div>
-            <div className="flex items-center gap-2 text-slate-700 font-bold"><Bot size={20} aria-hidden="true" /> Try a question</div>
+            <div className="flex items-center gap-2 text-text font-bold"><Bot size={20} aria-hidden="true" /> Try a question</div>
             <div className="flex flex-wrap gap-2 mt-3">
               {SUGGESTIONS.map((s) => (
                 <button key={s} type="button" className="secondary text-left !rounded-2xl" disabled={busy || !online || !isChatbotConfigured} onClick={() => send(s)}>
@@ -78,7 +78,7 @@ export default function Analytics() {
         {messages.map((m, i) => (
           <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
-              className={`rounded-2xl px-4 py-3 max-w-[90%] whitespace-pre-wrap break-words ${m.role === 'user' ? 'bg-brand text-white' : 'bg-indigo-50 text-slate-900'}`}
+              className={`rounded-2xl px-4 py-3 max-w-[90%] whitespace-pre-wrap break-words ${m.role === 'user' ? 'bg-brand text-brand-contrast' : 'bg-brand-soft text-text'}`}
               aria-label={m.role === 'user' ? 'You said' : 'Assistant said'}
             >
               {m.content}

@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { supabase, isSupabaseConfigured } from '../lib/supabase.js';
 import { authRedirect } from '../lib/native.js';
 import { fetchProfile } from '../services/profile.js';
+import { applyAppearance } from '../lib/applyTheme.js';
 
 const AuthContext = createContext(null);
 const CACHE_KEY = 'navi:lastUser';
@@ -114,6 +115,7 @@ export function AuthProvider({ children }) {
       .then((p) => {
         if (cancelled) return;
         if (!p) { setRoleVerified(true); return; }
+        applyAppearance({ theme: p.theme, brand: p.brand_color });
         setUser((prev) => {
           if (!prev || prev.id !== p.id) return prev;
           const next = { ...prev, name: p.display_name || prev.name, role: p.role, superAdmin: p.is_super_admin === true };
@@ -168,6 +170,7 @@ export function AuthProvider({ children }) {
 
   const signOut = useCallback(async () => {
     writeCache(null);
+    applyAppearance(null); // the next person on this device starts with the default look
     setUser(null);
     setRoleVerified(false);
     setOfflineSession(false);

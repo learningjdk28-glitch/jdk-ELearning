@@ -117,19 +117,19 @@ export default function ChatWidget() {
       {open && (
         <section
           aria-label={cfg.title}
-          className="w-[min(22rem,calc(100vw-2rem))] h-[min(34rem,calc(100dvh-9.5rem))] bg-white rounded-2xl shadow-2xl border border-indigo-100 flex flex-col overflow-hidden"
+          className="w-[min(22rem,calc(100vw-2rem))] h-[min(34rem,calc(100dvh-9.5rem))] bg-surface-raised rounded-2xl shadow-2xl border border-brand/30 flex flex-col overflow-hidden"
         >
-          <header className="bg-brand text-white px-4 py-3 flex items-center gap-3">
-            <span className="w-9 h-9 rounded-full bg-white/20 grid place-items-center" aria-hidden="true"><Bot size={20} /></span>
+          <header className="bg-brand text-brand-contrast px-4 py-3 flex items-center gap-3">
+            <span className="w-9 h-9 rounded-full bg-brand-contrast/20 grid place-items-center" aria-hidden="true"><Bot size={20} /></span>
             <div className="flex-1 min-w-0">
               <div className="font-bold leading-tight truncate">{cfg.title}</div>
-              <div className="text-xs text-white/80 truncate">{cfg.subtitle}</div>
+              <div className="text-xs text-brand-contrast/80 truncate">{cfg.subtitle}</div>
             </div>
-            <button type="button" aria-label="Minimize chat" className="p-1 rounded hover:bg-white/20" onClick={() => setOpen(false)}><Minus size={18} /></button>
+            <button type="button" aria-label="Minimize chat" className="p-1 rounded hover:bg-brand-contrast/20" onClick={() => setOpen(false)}><Minus size={18} /></button>
             <button
               type="button"
               aria-label="Close and clear chat"
-              className="p-1 rounded hover:bg-white/20"
+              className="p-1 rounded hover:bg-brand-contrast/20"
               onClick={() => { setOpen(false); setChats({ learn: [], analytics: [] }); setError(''); }}
             >
               <X size={18} />
@@ -145,7 +145,7 @@ export default function ChatWidget() {
                   role="tab"
                   aria-selected={mode === id}
                   onClick={() => { setMode(id); setError(''); }}
-                  className={`flex-1 rounded-lg py-1.5 text-sm font-semibold ${mode === id ? 'bg-white text-brand shadow-sm' : 'text-slate-600'}`}
+                  className={`flex-1 rounded-lg py-1.5 text-sm font-semibold ${mode === id ? 'bg-surface-raised text-brand shadow-sm' : 'text-text-muted'}`}
                 >
                   {label}
                 </button>
@@ -154,7 +154,7 @@ export default function ChatWidget() {
           )}
 
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-surface" aria-live="polite">
-            <div className="bg-brand-soft text-slate-900 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[90%]">
+            <div className="bg-brand-soft text-text rounded-2xl rounded-tl-sm px-4 py-3 max-w-[90%]">
               Hi, {first}! {cfg.intro}
             </div>
             {messages.length === 0 && (
@@ -165,7 +165,7 @@ export default function ChatWidget() {
                     type="button"
                     disabled={busy || blocked}
                     onClick={() => send(label)}
-                    className="w-full flex items-center gap-3 text-left bg-brand-soft hover:bg-indigo-100 disabled:opacity-60 rounded-full px-4 py-2.5 font-semibold text-slate-800"
+                    className="w-full flex items-center gap-3 text-left bg-brand-soft hover:bg-brand-soft disabled:opacity-60 rounded-full px-4 py-2.5 font-semibold text-text"
                   >
                     <Icon size={18} className="text-brand shrink-0" aria-hidden="true" />
                     <span>{label}</span>
@@ -175,27 +175,27 @@ export default function ChatWidget() {
             )}
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`rounded-2xl px-4 py-2.5 max-w-[90%] whitespace-pre-wrap break-words ${m.role === 'user' ? 'bg-brand text-white rounded-tr-sm' : 'bg-brand-soft text-slate-900 rounded-tl-sm'}`}>
+                <div className={`rounded-2xl px-4 py-2.5 max-w-[90%] whitespace-pre-wrap break-words ${m.role === 'user' ? 'bg-brand text-brand-contrast rounded-tr-sm' : 'bg-brand-soft text-text rounded-tl-sm'}`}>
                   {m.content}
-                  {m.local && <div className="mt-1 text-xs text-slate-600 flex items-center gap-1"><WifiOff size={12} aria-hidden="true" /> Saved answer (offline)</div>}
+                  {m.local && <div className="mt-1 text-xs text-text-muted flex items-center gap-1"><WifiOff size={12} aria-hidden="true" /> Saved answer (offline)</div>}
                 </div>
               </div>
             ))}
-            {busy && <p className="text-sm text-slate-600">Thinking...</p>}
+            {busy && <p className="text-sm text-text-muted">Thinking...</p>}
             {offlineLearn && messages.length === 0 && (
-              <p className="text-sm text-amber-800 flex items-center gap-1" role="status"><WifiOff size={14} aria-hidden="true" /> Offline: I answer from saved FAQs and the glossary.</p>
+              <p className="text-sm text-warning flex items-center gap-1" role="status"><WifiOff size={14} aria-hidden="true" /> Offline: I answer from saved FAQs and the glossary.</p>
             )}
-            {blocked && <p className="text-sm text-amber-800" role="alert">{online ? 'Analytics service not connected (VITE_CHATBOT_URL).' : 'Analytics needs internet.'}</p>}
-            {error && <p className="text-sm text-red-700" role="alert">{error}</p>}
+            {blocked && <p className="text-sm text-warning" role="alert">{online ? 'Analytics service not connected (VITE_CHATBOT_URL).' : 'Analytics needs internet.'}</p>}
+            {error && <p className="text-sm text-danger" role="alert">{error}</p>}
             <div ref={end} />
           </div>
 
-          <form className="flex items-center gap-2 p-3 border-t border-indigo-100 bg-white" onSubmit={(e) => { e.preventDefault(); send(text); }}>
+          <form className="flex items-center gap-2 p-3 border-t border-brand/30 bg-surface-raised" onSubmit={(e) => { e.preventDefault(); send(text); }}>
             <label className="flex-1">
               <span className="sr-only">Your message</span>
               <input
                 ref={input}
-                className="w-full rounded-full border border-indigo-200 bg-brand-soft/40 px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand"
+                className="w-full rounded-full border border-brand/30 bg-brand-soft/40 px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 maxLength={2000}
@@ -204,7 +204,7 @@ export default function ChatWidget() {
                 autoComplete="off"
               />
             </label>
-            <button type="submit" aria-label="Send" disabled={busy || blocked || !text.trim()} className="w-11 h-11 rounded-full bg-brand text-white grid place-items-center disabled:opacity-50">
+            <button type="submit" aria-label="Send" disabled={busy || blocked || !text.trim()} className="w-11 h-11 rounded-full bg-brand text-brand-contrast grid place-items-center disabled:opacity-50">
               <Send size={18} />
             </button>
           </form>
@@ -215,10 +215,10 @@ export default function ChatWidget() {
         aria-label={open ? 'Hide chat assistant' : 'Open chat assistant'}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="relative w-16 h-16 rounded-full bg-brand text-white grid place-items-center shadow-xl hover:bg-brand-dark"
+        className="relative w-16 h-16 rounded-full bg-brand text-brand-contrast grid place-items-center shadow-xl hover:bg-brand-strong"
       >
         <Bot size={30} aria-hidden="true" />
-        <span className={`absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full border-2 border-white ${online ? 'bg-green-500' : 'bg-amber-500'}`} aria-hidden="true" />
+        <span className={`absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full border-2 border-surface-raised ${online ? 'bg-success' : 'bg-warning'}`} aria-hidden="true" />
       </button>
     </div>
   );

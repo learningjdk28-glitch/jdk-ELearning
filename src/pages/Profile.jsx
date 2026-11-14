@@ -8,7 +8,7 @@ import { flush } from '../services/offline.js';
 import { outboxSummary } from '../lib/offlineRules.js';
 import { listCourses, myEnrollments } from '../services/lms.js';
 import { Callout } from '../components/ui.jsx';
-import { DetailsForm, Loading, PasswordSection, ProfileHeader, Section, useMyProfile } from '../components/ProfileSections.jsx';
+import { AppearanceSection, DetailsForm, Loading, PasswordSection, ProfileHeader, Section, useMyProfile } from '../components/ProfileSections.jsx';
 
 /** Student profile: identity, contact details, enrolled courses, sync and account. */
 export default function Profile() {
@@ -74,6 +74,8 @@ function StudentProfile({ user, setDisplayName }) {
         </Section>
         <PasswordSection online={online} />
       </div>
+
+      {p && <AppearanceSection key={p.id} userId={user.id} profile={p} online={online} onSaved={me.setProfile} />}
 
     </div>
   );

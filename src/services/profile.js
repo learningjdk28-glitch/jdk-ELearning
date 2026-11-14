@@ -18,7 +18,7 @@ export async function fetchProfile(userId) {
   if (!supabase) return null;
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, display_name, role, is_super_admin, student_number, phone, address, school_id, created_at')
+    .select('id, display_name, role, is_super_admin, student_number, phone, address, school_id, created_at, theme, brand_color')
     .eq('id', userId)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -47,7 +47,14 @@ export async function changePassword(password) {
   if (error) throw new Error(error.message);
 }
 
-const PROFILE_FIELDS = 'id, display_name, role, is_super_admin, student_number, phone, address, school_id, created_at';
+const PROFILE_FIELDS = 'id, display_name, role, is_super_admin, student_number, phone, address, school_id, created_at, theme, brand_color';
+
+/** Saves light / dark / same as the device and the brand colour (a preset id, '#rrggbb', or null for the default). */
+export async function saveAppearance(userId, { theme, brand }) {
+  need();
+  const { error } = await supabase.from('profiles').update({ theme, brand_color: brand || null }).eq('id', userId);
+  if (error) throw new Error(error.message);
+}
 
 /** Saves the signed-in user's own editable fields. Validated here and again by the database. */
 export async function updateMyProfile(userId, fields) {
