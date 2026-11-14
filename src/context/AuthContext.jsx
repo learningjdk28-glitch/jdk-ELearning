@@ -116,7 +116,7 @@ export function AuthProvider({ children }) {
         if (!p) { setRoleVerified(true); return; }
         setUser((prev) => {
           if (!prev || prev.id !== p.id) return prev;
-          const next = { ...prev, name: p.display_name || prev.name, role: p.role };
+          const next = { ...prev, name: p.display_name || prev.name, role: p.role, superAdmin: p.is_super_admin === true };
           writeCache(next);
           return next;
         });
@@ -208,6 +208,8 @@ export function AuthProvider({ children }) {
       setDisplayName,
       role: user?.role || 'learner',
       isAdmin: user?.role === 'admin' && roleVerified && !offlineSession,
+      // Super administrator: sees every course, changes roles, manages the admin email list.
+      isSuperAdmin: user?.role === 'admin' && user?.superAdmin === true && roleVerified && !offlineSession,
     }),
     [user, loading, roleVerified, offlineSession, recovery, signIn, signUp, signOut, resetPassword, resendConfirmation, updatePassword, setDisplayName],
   );

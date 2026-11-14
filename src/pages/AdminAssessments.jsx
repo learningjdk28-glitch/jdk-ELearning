@@ -1,13 +1,13 @@
 import { useEffect,useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, ClipboardCheck, Plus, Trash2 } from 'lucide-react';
-import { listCourses,listModules,listQuizzes,createQuiz,updateQuiz,deleteQuiz,listQuizQuestions,addQuizQuestion,deleteQuizQuestion,listQuizAttempts } from '../services/lms.js';
+import { listManagedCourses,listModules,listQuizzes,createQuiz,updateQuiz,deleteQuiz,listQuizQuestions,addQuizQuestion,deleteQuizQuestion,listQuizAttempts } from '../services/lms.js';
 import { AdminHeading,Notice,panel,Status } from '../components/AdminUI.jsx';
 const blankQuestion={prompt:'',options:['','','',''],correct_index:0};
 export default function AdminAssessments(){
  const [courses,setCourses]=useState([]),[course,setCourse]=useState(''),[modules,setModules]=useState([]),[moduleId,setModuleId]=useState(''),[quizzes,setQuizzes]=useState([]),[quizId,setQuizId]=useState(''),[questions,setQuestions]=useState([]),[attempts,setAttempts]=useState([]);
  const [title,setTitle]=useState(''),[passMark,setPassMark]=useState(70),[question,setQuestion]=useState(blankQuestion),[busy,setBusy]=useState(false),[error,setError]=useState(''),[info,setInfo]=useState('');
- useEffect(()=>{listCourses().then(v=>{setCourses(v);setCourse(v[0]?.id||'');}).catch(e=>setError(e.message));},[]);
+ useEffect(()=>{listManagedCourses().then(v=>{setCourses(v);setCourse(v[0]?.id||'');}).catch(e=>setError(e.message));},[]);
  useEffect(()=>{if(!course){setModules([]);setModuleId('');return;}listModules(course).then(v=>{setModules(v);setModuleId(v[0]?.id||'');}).catch(e=>setError(e.message));},[course]);
  useEffect(()=>{if(!moduleId){setQuizzes([]);setQuizId('');return;}listQuizzes(moduleId).then(v=>{setQuizzes(v);setQuizId(v[0]?.id||'');}).catch(e=>setError(e.message));},[moduleId]);
  useEffect(()=>{if(!quizId){setQuestions([]);setAttempts([]);return;}Promise.all([listQuizQuestions(quizId),listQuizAttempts(quizId)]).then(([q,a])=>{setQuestions(q);setAttempts(a);}).catch(e=>setError(e.message));},[quizId]);

@@ -1,16 +1,12 @@
-import { z } from 'zod';
+import { displayNameSchema, passwordSchema } from '../lib/validation.js';
 import { supabase } from '../lib/supabase.js';
 import { db } from '../lib/db.js';
 
 // Profile and account actions. Every call returns data or throws an Error with a readable message.
 
-const nameSchema = z
-  .string()
-  .trim()
-  .min(1, 'Enter a name.')
-  .max(60, 'Use 60 characters or fewer.');
+const nameSchema = displayNameSchema;
 
-export const passwordSchema = z.string().min(8, 'Use at least 8 characters.');
+export { passwordSchema };
 
 function need() {
   if (!supabase) throw new Error('Supabase is not configured.');
@@ -23,7 +19,7 @@ export async function fetchProfile(userId) {
   if (!supabase) return null;
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, display_name, role, created_at')
+    .select('id, display_name, role, is_super_admin, student_number, phone, address, school_id, created_at')
     .eq('id', userId)
     .maybeSingle();
   if (error) throw new Error(error.message);

@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { z } from 'zod';
+import { emailSchema, passwordSchema } from '../lib/validation.js';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { Callout } from '../components/ui.jsx';
 
-const emailSchema = z.string().trim().email('Enter a valid email address.');
-const passwordSchema = z.string().min(8, 'Use at least 8 characters.');
 
 function useOnline() {
   const [online, setOnline] = useState(navigator.onLine);

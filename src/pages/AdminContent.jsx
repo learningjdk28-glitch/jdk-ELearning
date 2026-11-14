@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { BookOpen, FileUp, Plus, Trash2, ExternalLink, FileText, Layers, Pencil, Save } from 'lucide-react';
-import { listCourses, listModules, addModule, editModule, removeModule, listUnits, createUnit, editUnit, removeUnit } from '../services/lms.js';
+import { listManagedCourses, listModules, addModule, editModule, removeModule, listUnits, createUnit, editUnit, removeUnit } from '../services/lms.js';
 import { getMaterials, uploadMaterial, updateMaterial, deleteMaterial, openMaterial } from '../services/materials.js';
 import { AdminHeading, Notice, Empty, Status, panel } from '../components/AdminUI.jsx';
 
@@ -12,7 +12,7 @@ export default function AdminContent(){
  const [selected,setSelected]=useState(null),[moduleTitle,setModuleTitle]=useState(''),[moduleDescription,setModuleDescription]=useState('');
  const [units,setUnits]=useState([]),[materials,setMaterials]=useState([]),[lesson,setLesson]=useState(blankLesson),[editingLesson,setEditingLesson]=useState(null);
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[info,setInfo]=useState('');
- const loadCourses=useCallback(async()=>{const data=await listCourses();setCourses(data);setCourse(previous=>previous||data[0]?.id||'');},[]);
+ const loadCourses=useCallback(async()=>{const data=await listManagedCourses();setCourses(data);setCourse(previous=>previous||data[0]?.id||'');},[]);
  const loadModules=useCallback(async()=>{if(!course){setModules([]);return;}const data=await listModules(course);setModules(data);setSelected(current=>data.some(row=>row.id===current)?current:(data[0]?.id||null));},[course]);
  const loadDetails=useCallback(async()=>{if(!selected){setUnits([]);setMaterials([]);return;}const [a,b]=await Promise.all([listUnits(selected),getMaterials(selected)]);setUnits(a);setMaterials(b);},[selected]);
  useEffect(()=>{loadCourses().catch(e=>setError(e.message));},[loadCourses]);

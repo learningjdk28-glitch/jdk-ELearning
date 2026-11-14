@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, Plus, Search, Trash2, Pencil, Layers, ArrowUpRight } from 'lucide-react';
-import { createCourse, editCourse, listCourses, removeCourse, slugify } from '../services/lms.js';
+import { createCourse, editCourse, listManagedCourses, removeCourse, slugify } from '../services/lms.js';
 import { AdminHeading, Empty, Notice, Status, panel } from '../components/AdminUI.jsx';
 const blank = {title:'',description:'',category:'Technology',level:'Beginner',published:false};
 export default function AdminCourses(){
  const [rows,setRows]=useState([]),[draft,setDraft]=useState(blank),[selected,setSelected]=useState(null),[query,setQuery]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[info,setInfo]=useState('');
- async function load(){setRows(await listCourses());}
+ async function load(){setRows(await listManagedCourses());}
  useEffect(()=>{load().catch(e=>setError(e.message));},[]);
  async function run(fn){setBusy(true);setError('');setInfo('');try{await fn();await load();setInfo('Course changes saved.');}catch(e){setError(e.message);}finally{setBusy(false);}}
  async function submit(e){e.preventDefault();if(!draft.title.trim())return setError('A title is required.');if(!selected && !slugify(draft.title))return setError('Use a course title containing letters or numbers.');await run(async()=>{if(selected){await editCourse(selected,draft);}else{await createCourse(draft);}setDraft(blank);setSelected(null);});}

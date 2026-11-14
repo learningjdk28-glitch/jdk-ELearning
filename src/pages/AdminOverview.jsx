@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, Layers, Users, FileText, ArrowUpRight, UserRoundPlus, ClipboardList, LibraryBig, GraduationCap } from 'lucide-react';
-import { adminSummary, listCourses } from '../services/lms.js';
+import { adminSummary, listManagedCourses } from '../services/lms.js';
 import { AdminHeading, Metric, Notice, Status, panel } from '../components/AdminUI.jsx';
 const actions = [
   { to:'/admin/courses', title:'Create a course', subtitle:'Build a new learning path', icon:BookOpen },
@@ -13,7 +13,7 @@ const actions = [
 ];
 export default function AdminOverview(){
  const [stats,setStats]=useState(null), [courses,setCourses]=useState([]), [error,setError]=useState('');
- useEffect(()=>{let active=true;Promise.all([adminSummary(),listCourses()]).then(([s,c])=>{if(active){setStats(s);setCourses(c.slice(0,5));}}).catch(e=>active&&setError(e.message));return ()=>{active=false;};},[]);
+ useEffect(()=>{let active=true;Promise.all([adminSummary(),listManagedCourses()]).then(([s,c])=>{if(active){setStats(s);setCourses(c.slice(0,5));}}).catch(e=>active&&setError(e.message));return ()=>{active=false;};},[]);
  return <div className="space-y-7 pb-10">
  <AdminHeading title="Overview" description="Create meaningful learning experiences and keep your students on track." action={<Link className="primary" to="/admin/courses">+ Create course</Link>}/>
  <Notice error={error}/>

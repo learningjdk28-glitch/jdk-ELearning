@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { ClipboardList, Search, Users } from 'lucide-react';
-import { listCourses, searchStudents, enrollmentPage, setEnrollment, revokeEnrollment } from '../services/lms.js';
+import { listManagedCourses, searchStudents, enrollmentPage, setEnrollment, revokeEnrollment } from '../services/lms.js';
 import { AdminHeading, Notice, Status, panel } from '../components/AdminUI.jsx';
 export default function AdminEnrollments(){
  const [courses,setCourses]=useState([]),[students,setStudents]=useState([]),[rows,setRows]=useState([]);
  const [course,setCourse]=useState(''),[student,setStudent]=useState(''),[search,setSearch]=useState(''),[page,setPage]=useState(0),[total,setTotal]=useState(0);
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[info,setInfo]=useState('');
- useEffect(()=>{listCourses().then(c=>{setCourses(c);setCourse(c[0]?.id||'');}).catch(e=>setError(e.message));},[]);
+ useEffect(()=>{listManagedCourses().then(c=>{setCourses(c);setCourse(c[0]?.id||'');}).catch(e=>setError(e.message));},[]);
  useEffect(()=>{const timer=setTimeout(()=>{searchStudents(search,30).then(s=>{const filtered=s.filter(x=>x.role==='learner');setStudents(filtered);setStudent(previous=>filtered.some(x=>x.user_id===previous)?previous:filtered[0]?.user_id||'');}).catch(e=>setError(e.message));},250);return()=>clearTimeout(timer);},[search]);
  async function load(){if(!course){setRows([]);return;}const results=await enrollmentPage(course,20,page*20);setRows(results);setTotal(Number(results[0]?.total_rows||0));}
  useEffect(()=>{load().catch(e=>setError(e.message));},[course,page]);

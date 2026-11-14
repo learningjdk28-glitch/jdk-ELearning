@@ -7,7 +7,19 @@ function api() {
 }
 export function unwrap({ data, error }) { if (error) throw new Error(error.message); return data; }
 export function slugify(text) { return String(text).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60); }
-export const listCourses = () => api().from('courses').select('id,title,description,category,published,level,cover_url,created_at,updated_at').order('created_at', { ascending: false }).then(unwrap);
+const COURSE_FIELDS = 'id,title,description,category,published,level,cover_url,owner_id,created_at,updated_at';
+export const listCourses = () => api().from('courses').select(COURSE_FIELDS).order('created_at', { ascending: false }).then(unwrap);
+/** Courses the signed-in instructor manages: their own, or every course for the super administrator. */
+export async function listManagedCourses() {
+  const client = api();
+  const { data: { session } } = await client.auth.getSession();
+  if (!session) throw new Error('Sign in first.');
+  const { data: me, error } = await client.from('profiles').select('is_super_admin').eq('id', session.user.id).single();
+  if (error) throw new Error(error.message);
+  let query = client.from('courses').select(COURSE_FIELDS).order('created_at', { ascending: false });
+  if (!me.is_super_admin) query = query.eq('owner_id', session.user.id);
+  return unwrap(await query);
+}
 export const createCourse = (data) => api().from('courses').insert({
   id: slugify(data.id || data.title), title: data.title.trim(), description: data.description.trim(),
   category: data.category.trim() || 'General', level: data.level, published: Boolean(data.published),
