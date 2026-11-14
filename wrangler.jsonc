@@ -1,0 +1,12 @@
+// Cloudflare Workers static-assets deployment.
+// Cloudflare builds with `npm run build` and serves the Vite output in ./dist.
+// VITE_* variables are read at BUILD time: set them under Settings -> Build -> Variables and secrets.
+{
+  "name": "jdk-elearning",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "./dist",
+    // React Router handles /dashboard, /admin/login, ... so unknown paths return index.html.
+    "not_found_handling": "single-page-application"
+  }
+}
