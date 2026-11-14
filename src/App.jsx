@@ -3,7 +3,7 @@ import { LearnerProvider } from './context/LearnerContext.jsx';
 import Layout from './components/Layout.jsx';
 import RequireAuth from './components/RequireAuth.jsx';
 import Welcome from './pages/Welcome.jsx';
-import { AdminLogin, ForgotPassword, Login, Register, ResetPassword } from './pages/Auth.jsx';
+import { AdminLogin, AdminRegister, ForgotPassword, Login, Register, ResetPassword } from './pages/Auth.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Courses from './pages/Courses.jsx';
 import Modes from './pages/Modes.jsx';
@@ -44,6 +44,7 @@ export default function App() {
       <Route path="/" element={<Welcome />} />
       <Route path="/login" element={<Login />} />
       <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin/register" element={<AdminRegister />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />

@@ -142,13 +142,14 @@ export function AuthProvider({ children }) {
     if (error) throw error;
   }, []);
 
-  const signUp = useCallback(async (email, password, displayName) => {
+  // returnPath: where the confirmation link lands (/login for students, /admin/login for administrators).
+  const signUp = useCallback(async (email, password, displayName, returnPath = '/login') => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { display_name: displayName || email.split('@')[0] },
-        emailRedirectTo: authRedirect('/login'),
+        emailRedirectTo: authRedirect(returnPath),
       },
     });
     if (error) throw error;

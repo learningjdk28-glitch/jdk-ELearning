@@ -74,6 +74,21 @@ ok('display name taken from metadata', profiles.find((p) => p.id === A).display_
 await throws('learner cannot promote themselves to admin', () => as(A, () => db.exec(`update public.profiles set role='admin' where id='${A}'`)), /administrator/);
 await db.exec(`update public.profiles set role='admin' where id='${C}'`);
 ok('SQL Editor (no signed-in user) can promote an admin', (await q(`select role from public.profiles where id='${C}'`))[0].role === 'admin');
+// ---- Administrator email list ----
+const D = '44444444-4444-4444-8444-444444444444';
+const E = '55555555-5555-4555-8555-555555555555';
+await db.exec(`insert into public.admin_allowlist (email) values ('teacher@x.com')`);
+await db.exec(`insert into auth.users (id, email) values ('${D}', 'Teacher@X.com')`);
+ok('allowlisted email registers as admin (case-insensitive)', (await q(`select role from public.profiles where id='${D}'`))[0].role === 'admin');
+await db.exec(`insert into auth.users (id, email) values ('${E}', 'later@x.com')`);
+ok('email not on the list registers as learner', (await q(`select role from public.profiles where id='${E}'`))[0].role === 'learner');
+await db.exec(`insert into public.admin_allowlist (email) values ('later@x.com')`);
+ok('adding an existing account to the list promotes it', (await q(`select role from public.profiles where id='${E}'`))[0].role === 'admin');
+ok('learner cannot read the admin list', (await as(B, () => q('select * from public.admin_allowlist'))).length === 0);
+await throws('learner cannot add themselves to the admin list', () => as(B, () => db.exec(`insert into public.admin_allowlist (email) values ('b@x.com')`)));
+await throws('admin list rejects non-lowercase emails', () => db.exec(`insert into public.admin_allowlist (email) values ('Mixed@X.com')`), /check/);
+await db.exec(`delete from public.profiles where id in ('${D}', '${E}'); delete from auth.users where id in ('${D}', '${E}'); delete from public.admin_allowlist;`);
+
 await throws('learner cannot insert an admin profile', () => as(B, () => db.exec(`insert into public.profiles (id, role) values (gen_random_uuid(), 'admin')`)));
 await as(A, () => db.exec(`update public.profiles set display_name='Alice Z' where id='${A}'`));
 ok('learner can edit own display name', (await q(`select display_name from public.profiles where id='${A}'`))[0].display_name === 'Alice Z');

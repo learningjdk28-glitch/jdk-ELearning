@@ -200,7 +200,7 @@ function LoginForm({ admin }) {
       </form>
       <div className="flex justify-between flex-wrap gap-3 mt-5 text-sm text-indigo-700">
         <Link to="/forgot-password" className="underline">Forgot password?</Link>
-        {!admin && <Link to="/register" className="underline">Create an account</Link>}
+        <Link to={admin ? '/admin/register' : '/register'} className="underline">{admin ? 'Create an administrator account' : 'Create an account'}</Link>
       </div>
       <p className="mt-6 pt-5 border-t border-slate-100 text-sm text-slate-500">
         {admin
@@ -219,7 +219,12 @@ export function AdminLogin() {
   return <LoginForm admin />;
 }
 
-export function Register() {
+/**
+ * Shared sign-up form. `admin` is the administrator version: same account, but the confirmation link
+ * returns to the admin login. The ROLE is never chosen here: the database gives 'admin' only to emails
+ * on public.admin_allowlist, so registering on this page cannot make a stranger an administrator.
+ */
+function RegisterForm({ admin }) {
   const { user, signUp, configured } = useAuth();
   const navigate = useNavigate();
   const f = useAuthForm();
@@ -228,7 +233,7 @@ export function Register() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
 
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) return <Navigate to={admin ? '/admin' : '/dashboard'} replace />;
 
   async function submit(e) {
     e.preventDefault();
@@ -241,9 +246,12 @@ export function Register() {
     if (password !== confirm) return f.setError('The passwords do not match.');
     f.setBusy(true);
     try {
-      const { needsConfirmation } = await signUp(em.data, password, name.trim());
-      if (needsConfirmation) f.setInfo('Account created. Open the confirmation email, then log in.');
-      else navigate('/dashboard', { replace: true });
+      const { needsConfirmation } = await signUp(em.data, password, name.trim(), admin ? '/admin/login' : '/login');
+      if (needsConfirmation) {
+        f.setInfo(admin
+          ? 'Account created. Open the confirmation email, then sign in on the administrator login. Administrator access is given only to emails approved by the school.'
+          : 'Account created. Open the confirmation email, then log in.');
+      } else navigate(admin ? '/admin' : '/dashboard', { replace: true });
     } catch (err) {
       f.setError(friendly(err));
     } finally {
@@ -252,7 +260,11 @@ export function Register() {
   }
 
   return (
-    <Shell title="Create your account" desc="Create your free student account and start learning.">
+    <Shell
+      eyebrow={admin ? 'JDK Learn Administration' : 'Welcome to JDK Learn'}
+      title={admin ? 'Create an administrator account' : 'Create your account'}
+      desc={admin ? 'For teachers and administrators. Use the email the school approved for administrator access.' : 'Create your free student account and start learning.'}
+    >
       {!configured && <ConfigWarning />}
       <form onSubmit={submit} className="space-y-4 mt-3" noValidate>
         <label className="block text-sm font-medium">
@@ -276,10 +288,18 @@ export function Register() {
         <button className="primary w-full" disabled={f.busy || !configured}>{f.busy ? 'Creating account...' : 'Create account'}</button>
       </form>
       <p className="mt-5 text-sm">
-        Already registered? <Link to="/login" className="text-indigo-700 underline">Log in</Link>
+        Already registered? <Link to={admin ? '/admin/login' : '/login'} className="text-indigo-700 underline">Log in</Link>
       </p>
     </Shell>
   );
+}
+
+export function Register() {
+  return <RegisterForm />;
+}
+
+export function AdminRegister() {
+  return <RegisterForm admin />;
 }
 
 export function ForgotPassword() {
