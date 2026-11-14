@@ -213,30 +213,5 @@ ok('every table has at least one policy', tablesWithoutPolicy.length === 0, tabl
 const pub = await q(`select tablename from pg_publication_tables where pubname='supabase_realtime'`);
 ok('realtime publication includes 5 tables', pub.length === 5, pub.map((r) => r.tablename).join(','));
 
-// ---- Chatbot analytics layer (supabase_analytics.sql) ----
-const analyticsSql = readFileSync(new URL('../supabase_analytics.sql', import.meta.url), 'utf8');
-try {
-  await db.exec(analyticsSql);
-  await db.exec(analyticsSql);
-  ok('analytics script runs twice without errors', true);
-} catch (e) {
-  ok('analytics script runs twice without errors', false, e.message);
-}
-await db.exec(`update auth.users set email = 'private.person@example.com' where id = '${B}'`);
-await as(B, () => db.query('select public.sync_attempt($1::jsonb)', [JSON.stringify({ ...modPayload, id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd' })]));
-const asAnalytics = async (fn) => { await db.exec('set role analytics_ro'); try { return await fn(); } finally { await db.exec('reset role'); } };
-const viewRows = await asAnalytics(() => q('select * from analytics.attempts'));
-ok('analytics role can read the attempts view', viewRows.length === 1 && viewRows[0].total_answered === 12, JSON.stringify(viewRows[0] || {}));
-ok('learner is anonymous: 8 character reference, no email or name column', /^[0-9a-f]{8}$/.test(viewRows[0].learner_ref) && !Object.keys(viewRows[0]).some((k) => /email|name|user_id/.test(k)));
-const allCols = await q(`select column_name from information_schema.columns where table_schema='analytics'`);
-ok('no analytics view exposes email, display name or notes', !allCols.some((c) => /email|display_name|body|user_id|password/.test(c.column_name)), allCols.map((c) => c.column_name).filter((c) => /email|display_name|body|user_id/.test(c)).join(','));
-ok('competency view labels the four areas', (await asAnalytics(() => q('select distinct competency_name from analytics.competency_scores'))).length >= 1);
-await throws('analytics role cannot read public tables', () => asAnalytics(() => q('select * from public.profiles')), /permission denied/);
-await throws('analytics role cannot read auth users', () => asAnalytics(() => q('select email from auth.users')), /permission denied/);
-await throws('analytics role cannot write', () => asAnalytics(() => db.exec(`delete from analytics.attempts`)), /permission denied|read-only|cannot delete/);
-await throws('analytics role cannot create objects', () => asAnalytics(() => db.exec('create table analytics.x (a int)')), /permission denied/);
-await throws('anon cannot read analytics', () => as(null, () => q('select * from analytics.attempts')), /permission denied/);
-ok('analytics role is read-only with a statement limit', (await q(`select array_to_string(setconfig, ',') c from pg_db_role_setting s join pg_roles r on r.oid = s.setrole where r.rolname='analytics_ro'`))[0].c.includes('default_transaction_read_only=on'));
-
 console.log(`\n${pass}/${pass + fail} passed`);
 test('supabase_setup.sql passes every database check', () => assert.equal(fail, 0, fail + ' database checks failed'));

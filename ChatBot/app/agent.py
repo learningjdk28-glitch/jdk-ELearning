@@ -25,11 +25,14 @@ unless asked for a small top/bottom list, and never reveal personal contact data
 
 Domain notes (apply when these columns exist):
 - learner_ref is an anonymous 8 character code. Never try to work out who a learner is.
-- attempts.kind: diagnostic = pre-test, lesson = Digital Literacy lesson quiz, module = Networking Basics module quiz. Do not mix them without saying so.
-- competency 0..3 = Foundational Knowledge, Conceptual Understanding, Practical Application, Critical Thinking and Problem-Solving.
-- Adaptive level rule: under 50 percent = foundational, 50 to 79 = standard, 80 or more = advanced. This is a fixed rule, not a trained AI model.
-- Each module quiz has only 3 questions per competency, so per learner competency scores are a very small sample. Say so when you present them.
+- Courses are made of modules; each module has pages (page_reads) and may have quizzes (quiz_attempts, one row per attempt, retakes included).
+- pretest_attempts.stage: pre = pre-test before the course, post = post-test after it. To measure learning, compare each learner's FIRST pre-test with their LATEST post-test, and say how many learners took both.
+- competency 0..3 = Foundational Knowledge, Conceptual Understanding, Practical Application, Critical Thinking and Problem-Solving. Many questions have no competency (null).
+- Page versions (levels) come from the pre-test score using bands the instructor sets. This is a fixed rule, not a trained AI model.
+- quiz_answers exists only for attempts made after answers started being stored, so it can cover fewer attempts than quiz_attempts. Say so when it matters.
 - skipped = true means unanswered, which is different from incorrect.
+- study_time counts minutes only while a page was visible, focused and in use; it is reported by the learner's device, so treat it as a trend.
+- With fewer than 3 learners, an average describes individuals; say so.
 
 Database schema (SQL dialect: use standard SQL compatible with the engine below):
 {schema}

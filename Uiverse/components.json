@@ -1,0 +1,242 @@
+[
+  {
+    "id": 1,
+    "category": "01_Authentication",
+    "title": "Login card",
+    "creator": "ClawHack1",
+    "technology": "CSS",
+    "url": "https://uiverse.io/ClawHack1/loud-cat-92",
+    "lms_use": "Student and instructor sign-in",
+    "integration_notes": "Add visible labels, password visibility, validation, and real authentication."
+  },
+  {
+    "id": 2,
+    "category": "02_Search_and_Inputs",
+    "title": "Command search",
+    "creator": "uiverse-astronaut",
+    "technology": "CSS",
+    "url": "https://uiverse.io/uiverse-astronaut/orange-starfish-84",
+    "lms_use": "Search courses, lessons, and resources",
+    "integration_notes": "Wire search and keyboard shortcut; add a visible accessible label."
+  },
+  {
+    "id": 3,
+    "category": "02_Search_and_Inputs",
+    "title": "Shortcut search alternative",
+    "creator": "mustafa7799",
+    "technology": "CSS",
+    "url": "https://uiverse.io/mustafa7799/new-dolphin-33",
+    "lms_use": "Global dashboard search",
+    "integration_notes": "Alternative to command search; implement Ctrl+K rather than displaying an inactive hint."
+  },
+  {
+    "id": 4,
+    "category": "02_Search_and_Inputs",
+    "title": "Blue search input",
+    "creator": "mahiatlinux",
+    "technology": "Tailwind",
+    "url": "https://uiverse.io/mahiatlinux/chilly-warthog-9",
+    "lms_use": "Course catalog search",
+    "integration_notes": "Use as the light-theme option and implement filtering."
+  },
+  {
+    "id": 5,
+    "category": "02_Search_and_Inputs",
+    "title": "Underline input",
+    "creator": "uiverse-astronaut",
+    "technology": "CSS",
+    "url": "https://uiverse.io/uiverse-astronaut/big-jellyfish-9",
+    "lms_use": "Profile and short metadata fields",
+    "integration_notes": "Check contrast and preserve clear focus and error states."
+  },
+  {
+    "id": 6,
+    "category": "03_Quiz_and_Checklists",
+    "title": "Quiz answer radio group",
+    "creator": "uiverse-astronaut",
+    "technology": "CSS",
+    "url": "https://uiverse.io/uiverse-astronaut/wonderful-impala-28",
+    "lms_use": "Single-answer assessments",
+    "integration_notes": "Use a shared name per question, fieldset and legend; save answers and grade on the server."
+  },
+  {
+    "id": 7,
+    "category": "03_Quiz_and_Checklists",
+    "title": "Indigo checkbox",
+    "creator": "uiverse-astronaut",
+    "technology": "CSS",
+    "url": "https://uiverse.io/uiverse-astronaut/fluffy-panther-21",
+    "lms_use": "Multiple-answer quizzes and consent",
+    "integration_notes": "Label every choice; do not expose correct answers in client-only grading."
+  },
+  {
+    "id": 8,
+    "category": "03_Quiz_and_Checklists",
+    "title": "Editorial checklist",
+    "creator": "uiverse-astronaut",
+    "technology": "CSS",
+    "url": "https://uiverse.io/uiverse-astronaut/clever-puma-17",
+    "lms_use": "Lesson tasks and study checklist",
+    "integration_notes": "Persist completion per student; distinguish tasks from assessed completion."
+  },
+  {
+    "id": 9,
+    "category": "03_Quiz_and_Checklists",
+    "title": "Minimal square checkbox",
+    "creator": "talhaabu1",
+    "technology": "CSS",
+    "url": "https://uiverse.io/talhaabu1/odd-cobra-97",
+    "lms_use": "Bulk-select students and resources",
+    "integration_notes": "Add select-all and indeterminate state when used with tables."
+  },
+  {
+    "id": 10,
+    "category": "03_Quiz_and_Checklists",
+    "title": "Blue checkbox alternative",
+    "creator": "KirbGaming",
+    "technology": "CSS",
+    "url": "https://uiverse.io/KirbGaming/moody-rabbit-31",
+    "lms_use": "Course filters and multiple selections",
+    "integration_notes": "Keep labels clickable and provide visible keyboard focus."
+  },
+  {
+    "id": 11,
+    "category": "04_Resources_and_Uploads",
+    "title": "Bookmark control",
+    "creator": "Galahhad",
+    "technology": "CSS",
+    "url": "https://uiverse.io/Galahhad/mighty-warthog-42",
+    "lms_use": "Save lessons and reference materials",
+    "integration_notes": "Use an accessible Save lesson label; persist saved state per student."
+  },
+  {
+    "id": 12,
+    "category": "04_Resources_and_Uploads",
+    "title": "Download button",
+    "creator": "satyamchaudharydev",
+    "technology": "CSS",
+    "url": "https://uiverse.io/satyamchaudharydev/afraid-yak-30",
+    "lms_use": "Download modules, handouts, and certificates",
+    "integration_notes": "Connect to an authorized download URL and show file type and size nearby."
+  },
+  {
+    "id": 13,
+    "category": "04_Resources_and_Uploads",
+    "title": "Animated download alternative",
+    "creator": "Danishrehman786",
+    "technology": "CSS",
+    "url": "https://uiverse.io/Danishrehman786/old-cobra-46",
+    "lms_use": "Secondary download style",
+    "integration_notes": "Choose one download style across the app; honor reduced motion."
+  },
+  {
+    "id": 14,
+    "category": "04_Resources_and_Uploads",
+    "title": "File upload card",
+    "creator": "themrsami",
+    "technology": "Tailwind",
+    "url": "https://uiverse.io/themrsami/hard-insect-54",
+    "lms_use": "Assignment submissions and instructor material uploads",
+    "integration_notes": "Implement file restrictions, server validation, upload progress, retry, and submission receipt."
+  },
+  {
+    "id": 15,
+    "category": "05_Settings",
+    "title": "Sun and moon switch",
+    "creator": "JkHuger",
+    "technology": "CSS",
+    "url": "https://uiverse.io/JkHuger/itchy-turtle-45",
+    "lms_use": "Light and dark reading modes",
+    "integration_notes": "Connect to the application theme, persist preference, and label the control."
+  },
+  {
+    "id": 16,
+    "category": "05_Settings",
+    "title": "Minimal switch",
+    "creator": "AnthonyPreite",
+    "technology": "CSS",
+    "url": "https://uiverse.io/AnthonyPreite/neat-bat-64",
+    "lms_use": "Email notifications and study preferences",
+    "integration_notes": "Give each switch a visible setting name; save the setting and show failures."
+  },
+  {
+    "id": 17,
+    "category": "05_Settings",
+    "title": "Theme switch alternative",
+    "creator": "DawidMazurek4",
+    "technology": "CSS",
+    "url": "https://uiverse.io/DawidMazurek4/tough-monkey-56",
+    "lms_use": "Alternative theme selector",
+    "integration_notes": "Choose one theme control, preserve contrast, and support keyboard interaction."
+  },
+  {
+    "id": 18,
+    "category": "06_Loading",
+    "title": "Minimal loader",
+    "creator": "alexruix",
+    "technology": "CSS",
+    "url": "https://uiverse.io/alexruix/neat-tiger-82",
+    "lms_use": "Loading course lists and lessons",
+    "integration_notes": "Add status text and aria-busy; show timeout and retry states."
+  },
+  {
+    "id": 19,
+    "category": "06_Loading",
+    "title": "Blue circular dots",
+    "creator": "forgingdestiny",
+    "technology": "CSS",
+    "url": "https://uiverse.io/forgingdestiny/brave-fireant-72",
+    "lms_use": "Small loading areas and buttons",
+    "integration_notes": "Keep animation brief, provide reduced motion, and prevent duplicate submissions."
+  },
+  {
+    "id": 20,
+    "category": "06_Loading",
+    "title": "Dot loader alternative",
+    "creator": "ashish-yadv",
+    "technology": "CSS",
+    "url": "https://uiverse.io/ashish-yadv/hungry-otter-20",
+    "lms_use": "Search and background request feedback",
+    "integration_notes": "Use only while a request is active; never use animation as measured completion progress."
+  },
+  {
+    "id": 21,
+    "category": "07_Notifications_and_Cards",
+    "title": "Action notification",
+    "creator": "uiverse-astronaut",
+    "technology": "CSS",
+    "url": "https://uiverse.io/uiverse-astronaut/wise-seahorse-8",
+    "lms_use": "New feedback or assignment updates",
+    "integration_notes": "Replace sample wording; use aria-live politely and meaningful action links."
+  },
+  {
+    "id": 22,
+    "category": "07_Notifications_and_Cards",
+    "title": "Information card",
+    "creator": "mustafa7799",
+    "technology": "CSS",
+    "url": "https://uiverse.io/mustafa7799/witty-swan-91",
+    "lms_use": "Lesson hints, prerequisites, and instructor notices",
+    "integration_notes": "Adapt text and colors; critical instructions must remain visible."
+  },
+  {
+    "id": 23,
+    "category": "07_Notifications_and_Cards",
+    "title": "Status card",
+    "creator": "themrsami",
+    "technology": "Tailwind",
+    "url": "https://uiverse.io/themrsami/dry-mole-95",
+    "lms_use": "Submission status or module processing status",
+    "integration_notes": "Render real backend states; do not let a decorative toggle change a grade."
+  },
+  {
+    "id": 24,
+    "category": "07_Notifications_and_Cards",
+    "title": "Confirmation card",
+    "creator": "themrsami",
+    "technology": "Tailwind",
+    "url": "https://uiverse.io/themrsami/selfish-fox-70",
+    "lms_use": "Submission confirmation and saved changes",
+    "integration_notes": "Show the true submission timestamp and reference after the server confirms success."
+  }
+]

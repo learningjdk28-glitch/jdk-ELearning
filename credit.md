@@ -49,7 +49,7 @@ JDK Learning System is an offline-first adaptive learning app. This file lists w
 ## Features
 
 - JDK Assistant (`src/components/ChatWidget.jsx`, `ChatBot/app/assistant.py`): floating learning assistant for signed-in learners, with saved FAQ and glossary answers when offline (`src/lib/offlineAnswer.js`).
-- Analytics assistant (`ChatBot/app/agent.py`, `ChatBot/app/sql_guard.py`): administrator-only chat over anonymous, read-only analytics views (`supabase_analytics.sql`).
+- Analytics assistant (`ChatBot/app/agent.py`, `ChatBot/app/sql_guard.py`): administrator-only chat over anonymous, read-only analytics views (`supabase/migrations/20261124c_analytics_views.sql`).
 - The assistant chat panel layout follows a mockup supplied by the project owner.
 
 ## Testing tools (development only)

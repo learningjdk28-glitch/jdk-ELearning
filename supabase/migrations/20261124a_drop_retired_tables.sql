@@ -16,6 +16,15 @@
 -- Safe to run more than once. After this, do not re-run supabase_setup.sql or the Phase 0 migration
 -- (they reference these tables); every later migration is fine.
 
+-- The chatbot's old analytics views read these tables. They are rebuilt on the current tables by
+-- 20261124c_analytics_views.sql (run it right after this file).
+drop view if exists analytics.answers;
+drop view if exists analytics.competency_scores;
+drop view if exists analytics.attempts;
+drop view if exists analytics.lesson_progress;
+drop view if exists analytics.learners;
+drop view if exists analytics.lessons;
+
 drop function if exists public.sync_attempt(jsonb);
 drop function if exists public.reset_my_progress();
 drop function if exists public.admin_learner_overview();

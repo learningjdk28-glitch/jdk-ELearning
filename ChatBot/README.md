@@ -36,9 +36,9 @@ copy .env.example .env             # set OPENROUTER_API_KEY, keep REQUIRE_AUTH=f
 
 ## Connect it to the real JDK Learning System (Supabase)
 
-1. In the Supabase SQL Editor run `LearningManagementSystem/supabase_analytics.sql`.
-   It creates a schema `analytics` with anonymous, read-only views and a role `analytics_ro`.
-   No email, display name or notes are exposed. Learners appear only as an 8 character `learner_ref`.
+1. In the Supabase SQL Editor run `supabase/migrations/20261124c_analytics_views.sql` (it is also part of the normal migrations).
+   It creates a schema `analytics` with anonymous, read-only views over the current course tables and a role `analytics_ro`.
+   No email, name, student number, written answers or feedback are exposed. Learners appear only as an 8 character `learner_ref`.
 2. Set a password for the role (in the SQL Editor, not in a file):
    `alter role analytics_ro with login password '<long random password>';`
 3. In Supabase press **Connect**, copy the **Session pooler** connection string, and use the user

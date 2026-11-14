@@ -128,3 +128,43 @@ test('an uploaded font prints names the built-in fonts cannot', { skip: !existsS
   assert.equal(doc.getPageCount(), 1);
   assert.ok(pdf.length > 5000, 'the font subset is embedded');
 });
+
+test('analytics views for the chatbot: current data, anonymous, read-only, nothing else readable', async () => {
+  const S = '40000000-0000-4000-8000-000000000004';
+  await db.exec(`insert into auth.users (id, email) values ('${S}', 'private.person@example.com')`);
+  const mod = (await one(`insert into public.learning_modules (course_id, title) values ('c', 'M1') returning id`)).id;
+  const unit = (await one(`insert into public.learning_units (module_id, title, content, position) values ('${mod}', 'P', 'B', 0) returning id`)).id;
+  const quiz = (await one(`insert into public.learning_quizzes (module_id, title, published) values ('${mod}', 'Q', true) returning id`)).id;
+  const qq = (await one(`insert into public.learning_quiz_questions (quiz_id, prompt, options, correct_index, competency) values ('${quiz}', 'Q?', '["a","b"]', 1, 2) returning id`)).id;
+  await db.exec(`
+    insert into public.course_enrollments (course_id, user_id) values ('c', '${S}');
+    insert into public.unit_completions (unit_id, user_id) values ('${unit}', '${S}');
+    insert into public.learning_quiz_attempts (quiz_id, user_id, correct_count, question_count, score, passed, answers)
+      values ('${quiz}', '${S}', 1, 1, 100, true, '[{"questionId":"${qq}","choice":1}]');
+    insert into public.pretest_attempts (course_id, user_id, stage, correct_count, question_count, score, modules)
+      values ('c', '${S}', 'pre', 1, 4, 25, '[{"module_id":"${mod}","title":"M1","correct":1,"total":4}]');
+    insert into public.study_time (user_id, module_id, day, seconds) values ('${S}', '${mod}', current_date, 600);`);
+
+  const asAnalytics = async (fn) => { await db.exec('set role analytics_ro'); try { return await fn(); } finally { await db.exec('reset role'); } };
+  const attempts = await asAnalytics(() => q('select * from analytics.quiz_attempts'));
+  assert.equal(attempts.length, 1);
+  assert.match(attempts[0].learner_ref, /^[0-9a-f]{8}$/);
+  const answers = await asAnalytics(() => q('select * from analytics.quiz_answers'));
+  assert.deepEqual([answers[0].is_correct, answers[0].skipped, answers[0].competency_name], [true, false, 'Practical Application']);
+  assert.equal(Number((await asAnalytics(() => one("select pages from analytics.modules where course_id = 'c'"))).pages), 1);
+  assert.equal(Number((await asAnalytics(() => one('select score_pct from analytics.pretest_module_scores'))).score_pct), 25);
+  assert.equal(Number((await asAnalytics(() => one('select minutes from analytics.study_time'))).minutes), 10);
+  assert.equal((await asAnalytics(() => q('select * from analytics.page_reads'))).length, 1);
+
+  const cols = await q(`select table_name, column_name from information_schema.columns where table_schema = 'analytics'`);
+  assert.ok(cols.length > 40);
+  assert.deepEqual(cols.filter((c) => /email|display_name|student_number|body|link_url|feedback|user_id|password|file_path/.test(c.column_name)), [], 'no personal data');
+  await assert.rejects(asAnalytics(() => q('select * from public.profiles')), /permission denied/);
+  await assert.rejects(asAnalytics(() => q('select email from auth.users')), /permission denied/);
+  await assert.rejects(asAnalytics(() => db.exec('create table analytics.x (a int)')), /permission denied/);
+  await assert.rejects(as(null, () => q('select * from analytics.quiz_attempts')), /permission denied/, 'the app roles cannot read it');
+  await assert.rejects(as(S, () => q('select * from analytics.quiz_attempts')), /permission denied/);
+  const setting = await one(`select array_to_string(setconfig, ',') c from pg_db_role_setting s join pg_roles r on r.oid = s.setrole where r.rolname = 'analytics_ro'`);
+  assert.match(setting.c, /default_transaction_read_only=on/);
+  assert.match(setting.c, /statement_timeout=5s/);
+});

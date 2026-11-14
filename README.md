@@ -75,6 +75,6 @@ src/content/networking-basics/
 ## Analytics chatbot (administrators)
 
 An optional admin page (Analytics, `/admin/analytics`) asks the separate `ChatBot` service questions about
-quiz results. It reads anonymous, read-only views created by `supabase_analytics.sql`, never the raw tables.
+quiz results. It reads anonymous, read-only views created by `supabase/migrations/20261124c_analytics_views.sql`, never the raw tables.
 Setup steps are in `ChatBot/README.md`. Set `VITE_CHATBOT_URL` to enable it. The core learning flow does not
 depend on it and everything else works offline.
