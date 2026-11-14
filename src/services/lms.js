@@ -100,10 +100,6 @@ export const listQuizAttempts = (quizId) => {
 export const searchStudents = (search = '', limit = 20, offset = 0) => api().rpc('lms_admin_students', {
  p_search:search.trim().slice(0,100),p_limit:limit,p_offset:offset,
 }).then(unwrap);
-export const myCertificates = () => api().from('lms_certificates').select('id,course_id,course_title,student_name,issued_at').order('issued_at', {ascending:false}).then(unwrap);
-export const listCertificates = () => api().from('lms_certificates').select('id,course_id,user_id,course_title,student_name,issued_at').order('issued_at',{ascending:false}).limit(200).then(unwrap);
-export const issueCertificate = (courseId) => api().rpc('issue_lms_certificate',{p_course:courseId}).then(unwrap);
-export const deleteCertificate = (id) => api().from('lms_certificates').delete().eq('id',id).then(unwrap);
 export const courseMetrics = () => api().rpc('lms_admin_course_metrics').then(unwrap);
 export const enrollmentPage = (courseId,limit=20,offset=0) => api().rpc('lms_admin_enrollments',{
  p_course:courseId,p_limit:limit,p_offset:offset,

@@ -14,3 +14,6 @@ export function authRedirect(path) {
   const base = (import.meta.env?.VITE_PUBLIC_URL || window.location.origin).replace(/\/+$/, '');
   return `${base}${path}`;
 }
+
+/** The public web address (for links printed on certificates): VITE_PUBLIC_URL, else this page's address. */
+export const publicOrigin = () => (import.meta.env?.VITE_PUBLIC_URL || window.location.origin).replace(/\/+$/, '');

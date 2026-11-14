@@ -22,6 +22,7 @@
   --color-warning: 180 83 9;
   --color-danger: 185 28 28;
   --color-overlay: 0 0 0;                /* modal scrims, shadows */
+  --color-print-ink: 27 26 61;           /* default text on certificates; dark mode must NOT change it */
   /* Chart series, in fixed order. Distinct from the status colours above (success/warning/danger).
      Validated for colour-blind separation on white; 3 and 4 are below 3:1 contrast, so charts always show value labels.
      Dark-mode steps (theming phase): 57 135 229 / 217 89 38 / 25 158 112 / 201 133 0. */

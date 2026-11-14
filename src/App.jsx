@@ -19,6 +19,7 @@ import AdminAssessments from './pages/AdminAssessments.jsx';
 import StudentQuiz from './pages/StudentQuiz.jsx';
 import StudentCertificates from './pages/StudentCertificates.jsx';
 import AdminCertificates from './pages/AdminCertificates.jsx';
+import VerifyCertificate from './pages/VerifyCertificate.jsx';
 import AdminReports from './pages/AdminReports.jsx';
 import Catalog from './pages/Catalog.jsx';
 import CourseViewer from './pages/CourseViewer.jsx';
@@ -47,6 +48,8 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/verify" element={<VerifyCertificate />} />
+      <Route path="/verify/:code" element={<VerifyCertificate />} />
 
       <Route
         element={

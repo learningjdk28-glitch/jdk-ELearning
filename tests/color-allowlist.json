@@ -3,12 +3,10 @@
   "src/components/CourseCard.jsx",
   "src/components/VisualFlow.jsx",
   "src/pages/Admin.jsx",
-  "src/pages/AdminCertificates.jsx",
   "src/pages/AdminCourses.jsx",
   "src/pages/AdminOverview.jsx",
   "src/pages/Analytics.jsx",
   "src/pages/Catalog.jsx",
-  "src/pages/StudentCertificates.jsx",
   "src/pages/StudentMaterials.jsx",
   "src/pages/Welcome.jsx"
 ]

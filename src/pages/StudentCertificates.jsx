@@ -1,16 +1,102 @@
-import { useEffect,useState } from 'react';
+import { useState } from 'react';
+import { publicOrigin } from '../lib/native.js';
 import { Link } from 'react-router-dom';
-import { Award, BookOpen, Printer } from 'lucide-react';
-import { listCourses,myEnrollments,myCertificates,issueCertificate } from '../services/lms.js';
-import { Notice,panel } from '../components/AdminUI.jsx';
-export default function StudentCertificates(){
- const [courses,setCourses]=useState([]),[enrolled,setEnrolled]=useState([]),[certs,setCerts]=useState([]),[selected,setSelected]=useState(null),[busy,setBusy]=useState(''),[error,setError]=useState(''),[info,setInfo]=useState('');
- async function load(){const[c,e,s]=await Promise.all([listCourses(),myEnrollments(),myCertificates()]);setCourses(c);setEnrolled(e.filter(x=>x.status==='active').map(x=>x.course_id));setCerts(s);}
- useEffect(()=>{load().catch(e=>setError(e.message));},[]);
- async function issue(id){setBusy(id);setError('');setInfo('');try{await issueCertificate(id);await load();setInfo('Your certificate is ready.');}catch(e){setError(e.message);}finally{setBusy('');}}
- return <div className="max-w-5xl mx-auto space-y-6 pb-10"><div className="rounded-3xl bg-gradient-to-r from-slate-900 to-indigo-800 p-8 text-white"><Award size={34} className="text-indigo-200"/><h1 className="text-3xl font-black mt-3">My certificates</h1><p className="text-indigo-200 mt-2">Celebrate every milestone with a verified learning completion record.</p></div><Notice error={error} info={info}/>
- {selected&&<div id="certificate-document" className="bg-white border-8 border-double border-indigo-600 p-8 sm:p-14 text-center shadow-xl"><p className="text-indigo-700 uppercase tracking-[.2em] text-sm font-black">JDK Learn</p><Award size={56} className="mx-auto text-indigo-700 my-5"/><h2 className="text-3xl sm:text-4xl font-serif font-bold">Certificate of Completion</h2><p className="text-slate-500 mt-6">This certifies that</p><p className="text-3xl font-black mt-3">{selected.student_name}</p><p className="text-slate-500 mt-6">has successfully completed</p><p className="text-2xl font-bold text-indigo-700 mt-2">{selected.course_title}</p><p className="text-sm mt-8 text-slate-500">Issued {new Date(selected.issued_at).toLocaleDateString()} · Certificate ID {selected.id}</p></div>}
- {selected&&<div className="flex gap-3"><button className="primary" onClick={()=>window.print()}><Printer size={16}/> Print / save as PDF</button><button className="secondary" onClick={()=>setSelected(null)}>Close preview</button></div>}
- <section><h2 className="text-xl font-black mb-4">Issued certificates</h2><div className="grid md:grid-cols-2 gap-4">{certs.map(c=><div className={`${panel} p-5 flex gap-4 items-center`} key={c.id}><Award className="text-indigo-600 shrink-0" size={28}/><div className="flex-1"><p className="font-bold">{c.course_title}</p><p className="text-xs text-slate-500 mt-1">Issued {new Date(c.issued_at).toLocaleDateString()}</p></div><button className="secondary text-xs" onClick={()=>setSelected(c)}>View</button></div>)}{certs.length===0&&<p className="text-sm text-slate-500">No certificates issued yet. Complete a course to claim one.</p>}</div></section>
- <section className={`${panel} p-6`}><h2 className="text-xl font-black mb-4">Claim a certificate</h2><p className="text-sm text-slate-500 mb-4">Complete every published lesson and pass every published quiz in an enrolled course.</p>{courses.filter(c=>enrolled.includes(c.id)&&!certs.some(x=>x.course_id===c.id)).map(c=><div key={c.id} className="flex flex-wrap gap-3 justify-between items-center border-t border-slate-100 py-3"><div><p className="font-bold">{c.title}</p><Link to={`/learn/${encodeURIComponent(c.id)}`} className="text-indigo-700 text-xs">Return to course</Link></div><button className="primary text-sm" disabled={busy===c.id} onClick={()=>issue(c.id)}>{busy===c.id?'Checking…':'Check eligibility & issue'}</button></div>)}</section></div>;
+import { Award, Copy, Download, ShieldCheck } from 'lucide-react';
+import useLoad from '../hooks/useLoad.js';
+import { supabase } from '../lib/supabase.js';
+import { loadMyLearning } from '../services/learn.js';
+import { claimCertificate, downloadCertificate, myCertificates } from '../services/certificates.js';
+import { coursePath } from '../lib/learningPath.js';
+import { formatIssued, verifyUrl } from '../lib/certificateRules.js';
+import { ProgressBar } from '../components/learn/PathList.jsx';
+import { ErrorState, LoadingState } from '../components/learn/States.jsx';
+
+async function load() {
+  const [learning, certs, designs] = await Promise.all([
+    loadMyLearning(),
+    myCertificates(),
+    supabase.from('certificate_templates').select('course_id').then(({ data, error }) => { if (error) throw new Error(error.message); return data; }),
+  ]);
+  return { learning, certs, designed: new Set(designs.map((d) => d.course_id)) };
+}
+
+/** The student's certificates: download as PDF, share the verification link, claim a finished course. */
+export default function StudentCertificates() {
+  const { data, loading, error, reload } = useLoad(load, []);
+  const [busy, setBusy] = useState('');
+  const [message, setMessage] = useState({ error: '', info: '' });
+
+  if (loading) return <LoadingState label="Loading your certificates..." />;
+  if (error) return <ErrorState error={error} onRetry={reload} />;
+  const { learning, certs, designed } = data;
+
+  async function act(id, fn, ok) {
+    setBusy(id); setMessage({ error: '', info: '' });
+    try { await fn(); setMessage({ error: '', info: ok }); } catch (e) { setMessage({ error: e.message, info: '' }); } finally { setBusy(''); }
+  }
+  const copy = (code) => act(code, () => navigator.clipboard.writeText(verifyUrl(publicOrigin(), code)), 'Verification link copied.');
+  const toClaim = learning.courses.filter(({ course }) => !certs.some((c) => c.course_id === course.id));
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6 pb-12">
+      <header>
+        <h1 className="text-3xl font-black text-text flex items-center gap-3"><Award className="text-brand" aria-hidden="true" /> My certificates</h1>
+        <p className="text-text-muted mt-1">Each certificate has an ID that anyone can check on the <Link className="text-brand underline" to="/verify">verification page</Link>.</p>
+      </header>
+      {message.error && <p role="alert" className="rounded-xl bg-danger/10 border border-danger/30 text-danger p-3">{message.error}</p>}
+      {message.info && <p role="status" className="rounded-xl bg-success/10 border border-success/30 text-success p-3">{message.info}</p>}
+
+      <section aria-labelledby="mine">
+        <h2 id="mine" className="text-xl font-black text-text mb-3">Issued</h2>
+        {certs.length === 0 ? <p className="panel p-5 text-text-muted">No certificates yet. Finish a course to claim one.</p> : (
+          <ul className="space-y-3">
+            {certs.map((c) => (
+              <li key={c.id} className="panel p-5 flex flex-wrap items-center gap-4">
+                <Award size={28} className={c.revoked_at ? 'text-text-muted' : 'text-brand'} aria-hidden="true" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-text">{c.course_title}</p>
+                  <p className="text-sm text-text-muted">Issued {formatIssued(c.issued_at)} · <span className="font-mono">{c.code}</span></p>
+                  {c.revoked_at && <p className="text-sm text-danger">Revoked on {formatIssued(c.revoked_at)}. Ask your instructor if this is a mistake.</p>}
+                </div>
+                {!c.revoked_at && (
+                  <div className="flex flex-wrap gap-2">
+                    <button className="primary text-sm" disabled={busy === c.id} onClick={() => act(c.id, () => downloadCertificate(c), 'Certificate saved.')}>
+                      <Download size={16} aria-hidden="true" /> {busy === c.id ? 'Making the PDF...' : 'Download PDF'}
+                    </button>
+                    <button className="secondary text-sm" disabled={busy === c.code} onClick={() => copy(c.code)}><Copy size={16} aria-hidden="true" /> Copy link</button>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {toClaim.length > 0 && (
+        <section className="panel p-5 sm:p-6" aria-labelledby="claim">
+          <h2 id="claim" className="text-xl font-black text-text">Claim a certificate</h2>
+          <p className="text-sm text-text-muted mt-1">Read every page and pass every quiz of a course, then claim its certificate here.</p>
+          <ul className="mt-4 divide-y divide-border">
+            {toClaim.map(({ course, modules, placement }) => {
+              const path = coursePath(modules, learning.done, learning.passed, placement);
+              const ready = designed.has(course.id);
+              return (
+                <li key={course.id} className="py-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+                  <div>
+                    <p className="font-bold text-text">{course.title}</p>
+                    <div className="mt-2 flex items-center gap-2 max-w-sm"><div className="flex-1"><ProgressBar percent={path.percent} label={`${course.title} progress`} /></div><span className="text-xs text-text-muted tabular-nums">{path.percent}%</span></div>
+                    {!ready && <p className="text-xs text-text-muted mt-1">Your instructor has not set up a certificate for this course yet.</p>}
+                  </div>
+                  <button className="primary text-sm" disabled={!ready || busy === course.id}
+                    onClick={() => act(course.id, async () => { await claimCertificate(course.id); await reload(); }, 'Certificate issued. Download it above.')}>
+                    <ShieldCheck size={16} aria-hidden="true" /> {busy === course.id ? 'Checking...' : 'Claim certificate'}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+    </div>
+  );
 }
