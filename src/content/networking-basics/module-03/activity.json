@@ -1,0 +1,19 @@
+{
+  "type": "order",
+  "title": "Open a website, step by step",
+  "prompt": "Use the arrows to put the steps in the order they happen, then press Check.",
+  "steps": [
+    "Your device puts the packets back together and shows the page",
+    "DNS looks up the IP address",
+    "You type a website name",
+    "The server sends the page back as packets",
+    "Your browser sends a request in packets"
+  ],
+  "answer": [
+    "You type a website name",
+    "DNS looks up the IP address",
+    "Your browser sends a request in packets",
+    "The server sends the page back as packets",
+    "Your device puts the packets back together and shows the page"
+  ]
+}

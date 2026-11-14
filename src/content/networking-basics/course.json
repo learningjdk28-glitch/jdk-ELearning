@@ -1,0 +1,36 @@
+{
+  "id": "networking-basics",
+  "title": "Networking Basics",
+  "description": "Four short beginner modules on how devices connect, how the internet moves data, and how to stay safe and fix simple problems. Everything works offline.",
+  "version": 2,
+  "modules": [
+    {
+      "id": "nb-m1",
+      "slug": "network-fundamentals",
+      "folder": "module-01",
+      "title": "Introduction to Computer Networks",
+      "summary": "What is a network? Devices that share information, LAN, WAN and the internet."
+    },
+    {
+      "id": "nb-m2",
+      "slug": "devices-and-connections",
+      "folder": "module-02",
+      "title": "Networking Devices and Connections",
+      "summary": "How do devices connect? Routers, switches, modems, access points, Ethernet and Wi-Fi."
+    },
+    {
+      "id": "nb-m3",
+      "slug": "ip-and-internet-communication",
+      "folder": "module-03",
+      "title": "IP Addresses and Internet Communication",
+      "summary": "How does information reach the right device? IP addresses, DNS, packets and website requests."
+    },
+    {
+      "id": "nb-m4",
+      "slug": "safety-and-troubleshooting",
+      "folder": "module-04",
+      "title": "Network Safety and Basic Troubleshooting",
+      "summary": "How can users stay connected and safe? Wi-Fi protection and step-by-step troubleshooting."
+    }
+  ]
+}

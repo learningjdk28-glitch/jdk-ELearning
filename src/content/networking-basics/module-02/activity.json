@@ -1,0 +1,41 @@
+{
+  "type": "sort",
+  "title": "Wired or wireless?",
+  "prompt": "A classroom has fixed desktops and mobile tablets. Which link suits each device? Tap an item, then tap its group.",
+  "groups": [
+    "Ethernet (wired)",
+    "Wi-Fi (wireless)"
+  ],
+  "items": [
+    {
+      "id": "a",
+      "label": "A desktop fixed to a desk that needs a stable link",
+      "group": "Ethernet (wired)"
+    },
+    {
+      "id": "b",
+      "label": "A tablet carried between rooms",
+      "group": "Wi-Fi (wireless)"
+    },
+    {
+      "id": "c",
+      "label": "A computer plugged into a switch beside it",
+      "group": "Ethernet (wired)"
+    },
+    {
+      "id": "d",
+      "label": "A phone used around the school",
+      "group": "Wi-Fi (wireless)"
+    },
+    {
+      "id": "e",
+      "label": "A lab desktop used for long file transfers",
+      "group": "Ethernet (wired)"
+    },
+    {
+      "id": "f",
+      "label": "A laptop moved to the library",
+      "group": "Wi-Fi (wireless)"
+    }
+  ]
+}

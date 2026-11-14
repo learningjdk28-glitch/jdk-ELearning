@@ -1,0 +1,13 @@
+{
+  "type": "spot",
+  "title": "Spot the risky settings",
+  "prompt": "This is a router settings summary. Tap every risky setting, then press Check.",
+  "segments": [
+    { "id": "s1", "text": "Wi-Fi name: CafeFree (open, no password)", "flag": true, "why": "An open network has no encryption. Anyone nearby can join and watch unprotected traffic." },
+    { "id": "s2", "text": "Router admin password: admin", "flag": true, "why": "A default admin password is widely known and lets others change your settings." },
+    { "id": "s3", "text": "Wi-Fi security: WPA3", "flag": false, "why": "WPA3 is a strong, current security standard." },
+    { "id": "s4", "text": "Wi-Fi password: blue-mango-river-42", "flag": false, "why": "A long, unique phrase is a good Wi-Fi password." },
+    { "id": "s5", "text": "Router software last updated 4 years ago", "flag": true, "why": "Old firmware may contain known security holes. Keep it updated." },
+    { "id": "s6", "text": "Guest network turned on for visitors", "flag": false, "why": "A guest network keeps visitors away from your own devices." }
+  ]
+}

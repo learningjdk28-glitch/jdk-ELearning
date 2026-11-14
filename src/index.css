@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: #f6f5ff;
+  color: #1b1a3d;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+@layer components {
+  .panel {
+    @apply bg-white rounded-3xl border border-indigo-100 shadow-sm;
+  }
+  .primary {
+    @apply min-h-[44px] inline-flex items-center justify-center gap-2 bg-brand hover:bg-brand-dark text-white rounded-2xl px-5 py-3.5 font-bold shadow-md shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand;
+  }
+  .secondary {
+    @apply min-h-[44px] inline-flex items-center justify-center gap-2 border border-indigo-200 bg-white hover:bg-indigo-50 rounded-2xl px-4 py-2.5 font-semibold disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand;
+  }
+  .muted {
+    @apply text-slate-600 text-sm;
+  }
+  .field {
+    @apply block w-full border border-indigo-200 rounded-2xl p-3.5 mt-1 bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand;
+  }
+  .navlink {
+    @apply flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-indigo-50;
+  }
+  .navlink.active {
+    @apply bg-brand-soft text-brand font-bold;
+  }
+  .term {
+    @apply bg-brand-soft text-brand font-semibold rounded-md px-1.5 py-0.5 cursor-pointer hover:bg-indigo-200;
+  }
+  .tile {
+    @apply w-12 h-12 rounded-2xl grid place-items-center shrink-0;
+  }
+}
+
+@media print {
+  body { background: #fff !important; }
+  body * { visibility: hidden !important; }
+  #certificate-document, #certificate-document * { visibility: visible !important; }
+  #certificate-document { position: absolute !important; top: 0; left: 0; width: 100%; border: 8px double #4338ca !important; box-shadow: none !important; }
+}

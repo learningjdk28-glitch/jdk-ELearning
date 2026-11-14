@@ -1,0 +1,174 @@
+{
+  "version": 2,
+  "moduleId": "nb-m2",
+  "questions": [
+    {
+      "id": "nb2-01",
+      "competency": 0,
+      "difficulty": 1,
+      "text": "Which device primarily forwards packets between networks?",
+      "options": [
+        "Router",
+        "Switch",
+        "Monitor",
+        "Keyboard"
+      ],
+      "correct": 0,
+      "explanation": "A router connects and forwards traffic between different networks."
+    },
+    {
+      "id": "nb2-02",
+      "competency": 0,
+      "difficulty": 1,
+      "text": "What is the main job of an Ethernet switch?",
+      "options": [
+        "Provide a video display",
+        "Connect wired devices within a LAN",
+        "Write Wi-Fi passwords",
+        "Translate websites into books"
+      ],
+      "correct": 1,
+      "explanation": "A switch interconnects wired devices on a local network."
+    },
+    {
+      "id": "nb2-03",
+      "competency": 0,
+      "difficulty": 1,
+      "text": "Which medium usually provides a wired LAN connection?",
+      "options": [
+        "Bluetooth speaker",
+        "Printed barcode",
+        "Ethernet cable",
+        "Camera lens"
+      ],
+      "correct": 2,
+      "explanation": "Ethernet cabling is a common wired LAN connection method."
+    },
+    {
+      "id": "nb2-04",
+      "competency": 1,
+      "difficulty": 2,
+      "text": "Why might a classroom use a switch as well as a router?",
+      "options": [
+        "Both devices do exactly the same job in every case",
+        "The switch replaces every computer",
+        "A router can never connect to a switch",
+        "The switch connects local wired devices; the router connects networks"
+      ],
+      "correct": 3,
+      "explanation": "Switches serve local wired connectivity; routers provide network-to-network forwarding."
+    },
+    {
+      "id": "nb2-05",
+      "competency": 1,
+      "difficulty": 2,
+      "text": "Why can Wi-Fi become unreliable through several thick walls?",
+      "options": [
+        "Wireless signals can weaken and encounter interference",
+        "Ethernet cables disappear",
+        "Wi-Fi becomes a WAN automatically",
+        "The router loses its IP permanently"
+      ],
+      "correct": 0,
+      "explanation": "Distance and barriers can reduce wireless signal quality."
+    },
+    {
+      "id": "nb2-06",
+      "competency": 1,
+      "difficulty": 2,
+      "text": "How can one home gateway serve as a router, switch, and access point?",
+      "options": [
+        "Every home contains three hidden computers",
+        "It can combine several networking functions in one device",
+        "Switching is impossible on routers",
+        "It uses no network interfaces"
+      ],
+      "correct": 1,
+      "explanation": "Consumer gateways frequently integrate several networking functions."
+    },
+    {
+      "id": "nb2-07",
+      "competency": 2,
+      "difficulty": 2,
+      "text": "A desktop has an Ethernet port and sits beside a switch. Which connection is sensible?",
+      "options": [
+        "HDMI cable to the internet provider",
+        "USB charger to the wall",
+        "Ethernet cable from desktop to switch",
+        "Audio cable to the router"
+      ],
+      "correct": 2,
+      "explanation": "An Ethernet cable carries wired network traffic."
+    },
+    {
+      "id": "nb2-08",
+      "competency": 2,
+      "difficulty": 2,
+      "text": "A phone needs wireless access to a school LAN. Which component provides the wireless entry point?",
+      "options": [
+        "Printer toner",
+        "Ethernet-only patch cable",
+        "Monitor",
+        "Wireless access point"
+      ],
+      "correct": 3,
+      "explanation": "An access point lets wireless devices join the LAN."
+    },
+    {
+      "id": "nb2-09",
+      "competency": 2,
+      "difficulty": 2,
+      "text": "A house loses power to its Wi-Fi router. What is the first sensible action?",
+      "options": [
+        "Check that the router has power and restart only when appropriate",
+        "Change every website password",
+        "Replace all phones",
+        "Reinstall every web browser"
+      ],
+      "correct": 0,
+      "explanation": "Start by verifying the affected equipment is powered and functioning."
+    },
+    {
+      "id": "nb2-10",
+      "competency": 3,
+      "difficulty": 3,
+      "text": "Wired computers work, but tablets cannot join Wi-Fi. Where should you investigate first?",
+      "options": [
+        "Every Ethernet cable must be broken",
+        "Wireless access point or Wi-Fi settings",
+        "The printer tray",
+        "The keyboard layout"
+      ],
+      "correct": 1,
+      "explanation": "A wireless-specific fault is more likely when wired access still works."
+    },
+    {
+      "id": "nb2-11",
+      "competency": 3,
+      "difficulty": 3,
+      "text": "An Ethernet PC shows no link light while nearby PCs work. What is the best initial check?",
+      "options": [
+        "Assume the entire internet is offline",
+        "Delete the operating system",
+        "Check that its cable is firmly connected and try a known-good port or cable",
+        "Change the website URL"
+      ],
+      "correct": 2,
+      "explanation": "A single failed wired link suggests checking its local cable or port."
+    },
+    {
+      "id": "nb2-12",
+      "competency": 3,
+      "difficulty": 3,
+      "text": "A team needs reliable connectivity for fixed desktop PCs and mobility for tablets. What is the best design?",
+      "options": [
+        "Wi-Fi only for every device without exception",
+        "No router and no access point",
+        "Separate internet subscription per tablet",
+        "Ethernet for desktops and Wi-Fi for tablets on the same LAN"
+      ],
+      "correct": 3,
+      "explanation": "A combined wired and wireless LAN matches the different device needs."
+    }
+  ]
+}
