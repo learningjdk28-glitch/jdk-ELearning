@@ -4,10 +4,10 @@ import { COMPETENCIES, LEVEL_LABELS } from '../data/course.js';
 
 // One color and icon per competency, used on every screen so they are recognizable.
 export const COMP_STYLE = [
-  { Icon: GraduationCap, tile: 'bg-green-100 text-green-700', bar: 'bg-green-500', pill: 'bg-green-100 text-green-800' },
-  { Icon: Layers, tile: 'bg-blue-100 text-blue-700', bar: 'bg-blue-500', pill: 'bg-blue-100 text-blue-800' },
-  { Icon: Sun, tile: 'bg-amber-100 text-amber-700', bar: 'bg-amber-500', pill: 'bg-amber-100 text-amber-800' },
-  { Icon: Brain, tile: 'bg-violet-100 text-violet-700', bar: 'bg-violet-500', pill: 'bg-violet-100 text-violet-800' },
+  { Icon: GraduationCap, tile: 'bg-category-1/10 text-category-1', bar: 'bg-category-1', pill: 'bg-category-1/10 text-category-1' },
+  { Icon: Layers, tile: 'bg-category-2/10 text-category-2', bar: 'bg-category-2', pill: 'bg-category-2/10 text-category-2' },
+  { Icon: Sun, tile: 'bg-category-3/10 text-category-3', bar: 'bg-category-3', pill: 'bg-category-3/10 text-category-3' },
+  { Icon: Brain, tile: 'bg-category-4/10 text-category-4', bar: 'bg-category-4', pill: 'bg-category-4/10 text-category-4' },
 ];
 
 export function CompPill({ competency }) {
@@ -23,7 +23,7 @@ export function Heading({ title, desc, children }) {
     <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
       <div className="min-w-0">
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">{title}</h1>
-        {desc && <p className="text-slate-600 mt-2 max-w-2xl">{desc}</p>}
+        {desc && <p className="text-text-muted mt-2 max-w-2xl">{desc}</p>}
       </div>
       {children}
     </div>
@@ -38,7 +38,7 @@ export function BackHeader({ title, to, right }) {
       <button
         onClick={() => (to ? navigate(to) : navigate(-1))}
         aria-label="Go back"
-        className="w-10 h-10 grid place-items-center rounded-full hover:bg-indigo-100"
+        className="w-10 h-10 grid place-items-center rounded-full hover:bg-brand-soft"
       >
         <ArrowLeft size={22} />
       </button>
@@ -49,9 +49,9 @@ export function BackHeader({ title, to, right }) {
 }
 
 const LEVEL_STYLES = {
-  foundational: 'bg-red-100 text-red-800',
-  standard: 'bg-sky-100 text-sky-900',
-  advanced: 'bg-emerald-100 text-emerald-900',
+  foundational: 'bg-warning/10 text-warning',
+  standard: 'bg-brand-soft text-brand',
+  advanced: 'bg-success/10 text-success',
 };
 
 export function LevelBadge({ level }) {
@@ -64,10 +64,10 @@ export function LevelBadge({ level }) {
 
 export function Callout({ tone = 'info', children }) {
   const tones = {
-    info: 'bg-indigo-50 text-indigo-900 border-indigo-200',
-    warn: 'bg-amber-50 text-amber-900 border-amber-200',
-    good: 'bg-green-50 text-green-900 border-green-200',
-    bad: 'bg-red-50 text-red-900 border-red-200',
+    info: 'bg-brand-soft text-text border-brand/30',
+    warn: 'bg-warning/10 text-text border-warning/30',
+    good: 'bg-success/10 text-text border-success/30',
+    bad: 'bg-danger/10 text-text border-danger/30',
   };
   return (
     <div role={tone === 'bad' ? 'alert' : 'status'} className={`rounded-2xl border p-4 text-sm ${tones[tone]}`}>
@@ -78,7 +78,7 @@ export function Callout({ tone = 'info', children }) {
 
 export function FullScreenMessage({ children }) {
   return (
-    <div className="min-h-screen grid place-items-center p-8 text-center text-slate-600" role="status">
+    <div className="min-h-screen grid place-items-center p-8 text-center text-text-muted" role="status">
       {children}
     </div>
   );
@@ -89,7 +89,7 @@ export function CompetencyBars({ stats, title, compact = false }) {
   return (
     <div className="panel p-5 sm:p-6">
       {title && <h2 className="font-bold text-lg mb-4">{title}</h2>}
-      <div className={compact ? 'space-y-4' : 'divide-y divide-indigo-50'}>
+      <div className={compact ? 'space-y-4' : 'divide-y divide-border'}>
         {stats.map((s) => {
           const st = COMP_STYLE[s.competency];
           const Icon = st.Icon;
@@ -106,7 +106,7 @@ export function CompetencyBars({ stats, title, compact = false }) {
                   <span className="font-extrabold tabular-nums">{s.score === null ? 'Not assessed' : `${s.score}%`}</span>
                 </div>
                 <div
-                  className="bg-indigo-50 h-2.5 rounded-full overflow-hidden mt-2"
+                  className="bg-surface-muted h-2.5 rounded-full overflow-hidden mt-2"
                   role="progressbar"
                   aria-label={COMPETENCIES[s.competency].name}
                   aria-valuemin={0}
@@ -118,7 +118,7 @@ export function CompetencyBars({ stats, title, compact = false }) {
                 <p className="muted mt-1">
                   {s.answered === 0 ? 'No answers yet.' : `${s.correct} of ${s.answered} answered correctly.`}
                   {s.answered > 0 && !s.sufficient && (
-                    <span className="text-amber-800 font-semibold"> Insufficient evidence: take more questions.</span>
+                    <span className="text-warning font-semibold"> Insufficient evidence: take more questions.</span>
                   )}
                 </p>
               </div>

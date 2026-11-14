@@ -15,6 +15,7 @@ import PostQuiz from './pages/PostQuiz.jsx';
 import Glossary from './pages/Glossary.jsx';
 import Progress from './pages/Progress.jsx';
 import Profile from './pages/Profile.jsx';
+import InstructorProfile from './pages/InstructorProfile.jsx';
 import AdminOverview from './pages/AdminOverview.jsx';
 import AdminCourses from './pages/AdminCourses.jsx';
 import AdminStudents from './pages/AdminStudents.jsx';
@@ -87,6 +88,7 @@ export default function App() {
         <Route path="/admin/analytics" element={<RequireRole role="admin"><AdminReports /></RequireRole>} />
         <Route path="/admin/assistant" element={<RequireRole role="admin"><Analytics /></RequireRole>} />
         <Route path="/admin/certificates" element={<RequireRole role="admin"><AdminCertificates /></RequireRole>} />
+        <Route path="/admin/profile" element={<RequireRole role="admin"><InstructorProfile /></RequireRole>} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

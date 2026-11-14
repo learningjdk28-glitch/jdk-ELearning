@@ -1,4 +1,4 @@
-import { displayNameSchema, passwordSchema } from '../lib/validation.js';
+import { displayNameSchema, emailSchema, passwordSchema, profileFieldsSchema } from '../lib/validation.js';
 import { supabase } from '../lib/supabase.js';
 import { db } from '../lib/db.js';
 
@@ -58,4 +58,38 @@ export async function resetMyProgress(userId) {
     await db.progress.where('userId').equals(userId).delete();
     await db.notes.where('userId').equals(userId).delete();
   });
+}
+
+const PROFILE_FIELDS = 'id, display_name, role, is_super_admin, student_number, phone, address, school_id, created_at';
+
+/** Saves the signed-in user's own editable fields. Validated here and again by the database. */
+export async function updateMyProfile(userId, fields) {
+  need();
+  const parsed = profileFieldsSchema.safeParse(fields);
+  if (!parsed.success) throw new Error(parsed.error.issues[0].message);
+  const { data, error } = await supabase.from('profiles').update(parsed.data).eq('id', userId).select(PROFILE_FIELDS).single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+// Admin email list (super administrator only; enforced by RLS).
+export async function listAdminEmails() {
+  need();
+  const { data, error } = await supabase.from('admin_allowlist').select('email, added_at').order('added_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function addAdminEmail(email) {
+  need();
+  const parsed = emailSchema.safeParse(email);
+  if (!parsed.success) throw new Error(parsed.error.issues[0].message);
+  const { error } = await supabase.from('admin_allowlist').insert({ email: parsed.data.toLowerCase() });
+  if (error) throw new Error(/duplicate key/i.test(error.message) ? 'That email is already on the list.' : error.message);
+}
+
+export async function removeAdminEmail(email) {
+  need();
+  const { error } = await supabase.from('admin_allowlist').delete().eq('email', email);
+  if (error) throw new Error(error.message);
 }

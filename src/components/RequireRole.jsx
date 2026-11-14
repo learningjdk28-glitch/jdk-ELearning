@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 export default function RequireRole({ role, children }) {
   const auth = useAuth();
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return <Navigate to="/dashboard" replace />;
-  if (!auth.roleVerified && !auth.offlineSession) return <div role="status" className="p-8 text-center text-slate-600">Checking permissions…</div>;
+  if (!auth.roleVerified && !auth.offlineSession) return <div role="status" className="p-8 text-center text-text-muted">Checking permissions…</div>;
   if (auth.offlineSession || auth.role !== role) return <Navigate to="/dashboard" replace />;
   return children;
 }

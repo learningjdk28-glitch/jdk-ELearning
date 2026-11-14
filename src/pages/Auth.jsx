@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { emailSchema, passwordSchema } from '../lib/validation.js';
-import { Eye, EyeOff } from 'lucide-react';
+import { GraduationCap } from 'lucide-react';
+import PasswordInput from '../components/PasswordInput.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { Callout } from '../components/ui.jsx';
 
@@ -21,26 +22,22 @@ function useOnline() {
   return online;
 }
 
-function Shell({ title, desc, eyebrow = 'Welcome to JDK Learn', children }) {
+/** One plain card per portal: logo, portal name, title, form. Nothing else. */
+function Shell({ title, desc, portal = 'Student portal', children }) {
   const online = useOnline();
   return (
-    <div className="min-h-screen bg-[#eef2ff] grid place-items-center p-4 sm:p-7">
-      <div className="w-full max-w-5xl grid lg:grid-cols-[1fr_1fr] rounded-[2rem] overflow-hidden shadow-2xl shadow-indigo-950/10 bg-white border border-indigo-100">
-        <div className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-[#111b38] via-indigo-950 to-indigo-700 text-white p-12 min-h-[640px]">
-          <Link to="/" className="text-2xl font-black tracking-tight">JDK <span className="text-indigo-300">Learn</span></Link>
-          <div><span className="inline-flex rounded-full bg-white/10 border border-white/20 px-4 py-2 text-sm font-semibold">Your digital learning campus</span><h2 className="text-5xl leading-tight font-black mt-6">Learn something new. Every day.</h2><p className="text-indigo-200 text-lg mt-5 leading-relaxed">Structured courses, downloadable notes, interactive quizzes, and progress that follows you from device to device.</p></div>
-          <p className="text-indigo-300 text-sm">Secure sign-in · Powered by Supabase</p>
-        </div>
-        <div className="px-6 py-9 sm:px-12 sm:py-12 flex flex-col justify-center">
-          <Link to="/" className="lg:hidden text-2xl font-black text-indigo-700 mb-8">JDK Learn</Link>
-          <p className="text-xs font-black tracking-[.18em] uppercase text-indigo-600 mb-3">{eyebrow}</p>
-          <h1 className="text-3xl font-black text-slate-900">{title}</h1>
-          {desc && <p className="text-slate-500 mt-2 mb-5">{desc}</p>}
-          {!online && <div className="mb-4"><Callout tone="warn">No internet connection. Login, registration and password reset require internet.</Callout></div>}
-          {children}
-          <p className="text-xs text-slate-400 mt-9">Student and administrator access are securely determined by your account role.</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-surface grid place-items-center p-4">
+      <main className="w-full max-w-md bg-surface-raised border border-border rounded-3xl shadow-sm px-6 py-8 sm:px-9 sm:py-10">
+        <Link to="/" className="inline-flex items-center gap-2 text-xl font-black text-text">
+          <span className="rounded-xl p-1.5 bg-brand-soft text-brand"><GraduationCap size={22} aria-hidden="true" /></span>
+          JDK Learn
+        </Link>
+        <p className="mt-6 text-xs font-bold uppercase tracking-[.16em] text-brand">{portal}</p>
+        <h1 className="mt-1 text-2xl sm:text-3xl font-black text-text">{title}</h1>
+        {desc && <p className="text-text-muted mt-2">{desc}</p>}
+        {!online && <div className="mt-4"><Callout tone="warn">No internet connection. Signing in, registering and resetting a password need internet.</Callout></div>}
+        <div className="mt-5">{children}</div>
+      </main>
     </div>
   );
 }
@@ -51,33 +48,6 @@ function ConfigWarning() {
       Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to the .env file and restart the
       dev server.
     </Callout>
-  );
-}
-
-/** Password field with an eye button that shows or hides what was typed. */
-function PasswordInput({ value, onChange, autoComplete }) {
-  const [visible, setVisible] = useState(false);
-  const Icon = visible ? EyeOff : Eye;
-  return (
-    <div className="relative mt-1">
-      <input
-        className="field mt-0 pr-12"
-        type={visible ? 'text' : 'password'}
-        autoComplete={autoComplete}
-        value={value}
-        onChange={onChange}
-        required
-      />
-      <button
-        type="button"
-        onClick={() => setVisible((v) => !v)}
-        aria-label={visible ? 'Hide password' : 'Show password'}
-        aria-pressed={visible}
-        className="absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 hover:text-indigo-600 bg-transparent border-0 shadow-none"
-      >
-        <Icon size={20} aria-hidden="true" />
-      </button>
-    </div>
   );
 }
 
@@ -118,8 +88,8 @@ function LoginForm({ admin }) {
     submitted.current = false;
     signOut();
     f.setError(admin
-      ? 'This account does not have administrator access. Students sign in on the student login.'
-      : 'This is an administrator account. Please sign in on the administrator login.');
+      ? 'This account does not have instructor access. Students sign in on the student sign-in page.'
+      : 'This is an instructor account. Please use the instructor sign-in page.');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wrongPortal]);
 
@@ -150,15 +120,11 @@ function LoginForm({ admin }) {
   }
 
   return (
-    <Shell
-      eyebrow={admin ? 'JDK Learn Administration' : 'Student Portal'}
-      title={admin ? 'Administrator sign in' : 'Welcome back'}
-      desc={admin ? 'For teachers and administrators who manage courses, students and reports.' : 'Sign in to continue your courses on any device.'}
-    >
+    <Shell portal={admin ? 'Instructor portal' : 'Student portal'} title="Sign in">
       {!configured && <ConfigWarning />}
       <form onSubmit={submit} className="space-y-4 mt-3" noValidate>
         <label className="block text-sm font-medium">
-          {admin ? 'Administrator email' : 'Email'}
+          Email
           <input className="field" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         </label>
         <label className="block text-sm font-medium">
@@ -193,17 +159,17 @@ function LoginForm({ admin }) {
         )}
         {f.info && <Callout tone="good">{f.info}</Callout>}
         <button className="primary w-full" disabled={f.busy || !configured}>
-          {f.busy ? 'Signing in...' : admin ? 'Sign in as administrator' : 'Log in'}
+          {f.busy ? 'Signing in...' : 'Sign in'}
         </button>
       </form>
-      <div className="flex justify-between flex-wrap gap-3 mt-5 text-sm text-indigo-700">
+      <div className="flex justify-between flex-wrap gap-3 mt-5 text-sm text-brand">
         <Link to="/forgot-password" className="underline">Forgot password?</Link>
-        <Link to={admin ? '/admin/register' : '/register'} className="underline">{admin ? 'Create an administrator account' : 'Create an account'}</Link>
+        <Link to={admin ? '/admin/register' : '/register'} className="underline">Create an account</Link>
       </div>
-      <p className="mt-6 pt-5 border-t border-slate-100 text-sm text-slate-500">
+      <p className="mt-6 pt-5 border-t border-border text-sm text-text-muted">
         {admin
-          ? <>Are you a student? <Link to="/login" className="text-indigo-700 underline">Go to the student login</Link></>
-          : <>Teacher or administrator? <Link to="/admin/login" className="text-indigo-700 underline">Administrator login</Link></>}
+          ? <>Student? <Link to="/login" className="text-brand underline">Student sign in</Link></>
+          : <>Instructor? <Link to="/admin/login" className="text-brand underline">Instructor sign in</Link></>}
       </p>
     </Shell>
   );
@@ -247,7 +213,7 @@ function RegisterForm({ admin }) {
       const { needsConfirmation } = await signUp(em.data, password, name.trim(), admin ? '/admin/login' : '/login');
       if (needsConfirmation) {
         f.setInfo(admin
-          ? 'Account created. Open the confirmation email, then sign in on the administrator login. Administrator access is given only to emails approved by the school.'
+          ? 'Account created. Open the confirmation email, then sign in on the instructor sign-in page. Instructor access is given only to emails your school approved.'
           : 'Account created. Open the confirmation email, then log in.');
       } else navigate(admin ? '/admin' : '/dashboard', { replace: true });
     } catch (err) {
@@ -259,9 +225,9 @@ function RegisterForm({ admin }) {
 
   return (
     <Shell
-      eyebrow={admin ? 'JDK Learn Administration' : 'Welcome to JDK Learn'}
-      title={admin ? 'Create an administrator account' : 'Create your account'}
-      desc={admin ? 'For teachers and administrators. Use the email the school approved for administrator access.' : 'Create your free student account and start learning.'}
+      portal={admin ? 'Instructor portal' : 'Student portal'}
+      title="Create an account"
+      desc={admin ? 'Use the email your school approved for instructor access.' : undefined}
     >
       {!configured && <ConfigWarning />}
       <form onSubmit={submit} className="space-y-4 mt-3" noValidate>
@@ -286,7 +252,7 @@ function RegisterForm({ admin }) {
         <button className="primary w-full" disabled={f.busy || !configured}>{f.busy ? 'Creating account...' : 'Create account'}</button>
       </form>
       <p className="mt-5 text-sm">
-        Already registered? <Link to={admin ? '/admin/login' : '/login'} className="text-indigo-700 underline">Log in</Link>
+        Already registered? <Link to={admin ? '/admin/login' : '/login'} className="text-brand underline">Sign in</Link>
       </p>
     </Shell>
   );
@@ -335,7 +301,7 @@ export function ForgotPassword() {
         <button className="primary w-full" disabled={f.busy || !configured}>{f.busy ? 'Sending...' : 'Send reset link'}</button>
       </form>
       <p className="mt-5 text-sm">
-        <Link to="/login" className="text-indigo-700 underline">Back to log in</Link>
+        <Link to="/login" className="text-brand underline">Back to sign in</Link>
       </p>
     </Shell>
   );
