@@ -2,13 +2,15 @@ import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Award, BookOpen, ChartColumn, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { useLearner } from '../context/LearnerContext.jsx';
-import { resetMyProgress } from '../services/profile.js';
+import useOnline from '../hooks/useOnline.js';
+import { useOutbox } from '../components/SyncStatus.jsx';
+import { flush } from '../services/offline.js';
+import { outboxSummary } from '../lib/offlineRules.js';
 import { listCourses, myEnrollments } from '../services/lms.js';
 import { Callout } from '../components/ui.jsx';
-import { DetailsForm, Loading, PasswordSection, ProfileHeader, Result, Section, useAction, useMyProfile } from '../components/ProfileSections.jsx';
+import { DetailsForm, Loading, PasswordSection, ProfileHeader, Section, useMyProfile } from '../components/ProfileSections.jsx';
 
-/** Student profile: identity, contact details, enrolled courses, learning settings, sync and account. */
+/** Student profile: identity, contact details, enrolled courses, sync and account. */
 export default function Profile() {
   const { user, isAdmin, setDisplayName } = useAuth();
   if (isAdmin) return <Navigate to="/admin/profile" replace />;
@@ -16,7 +18,9 @@ export default function Profile() {
 }
 
 function StudentProfile({ user, setDisplayName }) {
-  const { mode, sync, online, runSync } = useLearner();
+  const online = useOnline();
+  const outbox = useOutbox();
+  const { pending, failed } = outboxSummary(outbox);
   const me = useMyProfile(user.id, online);
   const p = me.profile;
 
@@ -50,11 +54,7 @@ function StudentProfile({ user, setDisplayName }) {
       <div className="grid gap-5 lg:grid-cols-2">
         <MyCourses online={online} />
         <Section id="learning" title="My learning">
-          <dl className="space-y-1">
-            <dt className="muted">Learning mode</dt>
-            <dd className="font-semibold text-text">{mode} <Link to="/modes" className="text-brand underline ml-2 text-sm font-medium">Change</Link></dd>
-          </dl>
-          <div className="mt-4 flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3">
             <Link to="/progress" className="secondary"><ChartColumn size={17} aria-hidden="true" /> My progress</Link>
             <Link to="/certificates" className="secondary"><Award size={17} aria-hidden="true" /> My certificates</Link>
           </div>
@@ -64,19 +64,17 @@ function StudentProfile({ user, setDisplayName }) {
       <div className="grid gap-5 lg:grid-cols-2">
         <Section id="sync" title="Offline and sync" description="Work you do offline is saved on this device and sent when you reconnect.">
           <p className="font-semibold text-text">
-            {!online ? 'Offline' : sync.state === 'syncing' ? 'Syncing...' : sync.state === 'error' ? 'Problem syncing' : sync.lastAt ? 'Up to date' : 'Not synced yet'}
-            {' '}&middot; {sync.pending} change{sync.pending === 1 ? '' : 's'} waiting
+            {!online ? 'Offline' : pending ? 'Sending...' : 'Up to date'}
+            {' '}&middot; {pending} item{pending === 1 ? '' : 's'} waiting{failed ? ` · ${failed} not accepted` : ''}
           </p>
-          {sync.lastAt && <p className="muted">Last sync: {new Date(sync.lastAt).toLocaleString()}</p>}
-          {sync.state === 'error' && <div className="mt-2"><Callout tone="bad">{sync.message}</Callout></div>}
-          <button className="secondary mt-3" onClick={runSync} disabled={!online || sync.state === 'syncing'}>
-            <RefreshCw size={16} aria-hidden="true" /> Sync now
+          <p className="muted mt-1">{failed ? 'Open the sync status at the top of the page to retry or discard items that were not accepted.' : 'Courses you saved for offline use stay on this device.'}</p>
+          <button className="secondary mt-3" onClick={() => flush()} disabled={!online || pending === 0}>
+            <RefreshCw size={16} aria-hidden="true" /> Send now
           </button>
         </Section>
         <PasswordSection online={online} />
       </div>
 
-      <ResetProgress userId={user.id} online={online} />
     </div>
   );
 }
@@ -124,31 +122,6 @@ function MyCourses({ online }) {
           ))}
         </ul>
       )}
-    </Section>
-  );
-}
-
-function ResetProgress({ userId, online }) {
-  const [confirm, setConfirm] = useState(false);
-  const [state, run] = useAction();
-  async function doReset() {
-    const ok = await run(() => resetMyProgress(userId), 'Your progress was deleted.');
-    setConfirm(false);
-    if (ok) setTimeout(() => window.location.assign('/dashboard'), 800);
-  }
-  return (
-    <Section id="reset" tone="danger" title="Reset my progress"
-      description="Deletes your assessments, scores, lesson progress and notes from this device and from your account. This cannot be undone.">
-      {!confirm ? (
-        <button className="secondary !border-danger/40 !text-danger" onClick={() => setConfirm(true)} disabled={!online}>Reset my progress</button>
-      ) : (
-        <div className="flex flex-wrap gap-3">
-          <button className="primary !bg-danger" onClick={doReset} disabled={state.busy}>{state.busy ? 'Deleting...' : 'Yes, delete everything'}</button>
-          <button className="secondary" onClick={() => setConfirm(false)} disabled={state.busy}>Cancel</button>
-        </div>
-      )}
-      {!online && <p className="muted mt-2">You are offline. This needs internet.</p>}
-      <Result state={state} />
     </Section>
   );
 }

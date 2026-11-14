@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { Loader2, WifiOff } from 'lucide-react';
 
 /** Shared loading / error / offline / empty states for student screens. */
@@ -11,7 +10,7 @@ export function ErrorState({ error, onRetry }) {
     return (
       <div className="panel p-6" role="status">
         <p className="flex items-center gap-2 font-bold text-text"><WifiOff size={18} className="text-warning" aria-hidden="true" /> You are offline</p>
-        <p className="text-text-muted mt-1">Online courses need internet. Lessons you saved for offline use are under <Link className="text-brand underline" to="/courses">Offline lessons</Link>.</p>
+        <p className="text-text-muted mt-1">This page has not been saved on this device yet. Pages you opened before, and courses you saved with <strong>Save for offline</strong>, work without internet.</p>
         {onRetry && <button className="secondary mt-4" onClick={onRetry}>Try again</button>}
       </div>
     );

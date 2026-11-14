@@ -25,15 +25,13 @@ import {
   WifiOff,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { useLearner } from '../context/LearnerContext.jsx';
-import { FullScreenMessage } from './ui.jsx';
+import useOnline from '../hooks/useOnline.js';
 import ChatWidget from './ChatWidget.jsx';
 import SyncStatus, { useOutbox } from './SyncStatus.jsx';
 
 const SIDE_LINKS = [
   ['/dashboard', 'Dashboard', Home],
   ['/catalog', 'Explore courses', BookOpen],
-  ['/courses', 'Offline lessons', GraduationCap],
   ['/materials', 'Learning materials', FileText],
   ['/certificates', 'Certificates', Award],
   ['/pretest', 'Pre-Test', GraduationCap],
@@ -122,7 +120,7 @@ function ConfirmLogout({ onCancel, onConfirm, busy, waiting }) {
 
 export default function Layout() {
   const { user, isAdmin, signOut } = useAuth();
-  const { ready, online, sync } = useLearner();
+  const online = useOnline();
   const outbox = useOutbox();
   const location = useLocation();
   const navigate = useNavigate();
@@ -175,7 +173,7 @@ export default function Layout() {
           </div>
           <div className="hidden md:block font-bold text-lg">{adminMode ? 'JDK Learn / Instructor' : 'Learn at your own pace'}</div>
           <div className="flex items-center gap-3 text-sm">
-            {!adminMode && <SyncStatus online={online} legacyPending={sync.pending} />}
+            {!adminMode && <SyncStatus online={online} />}
             <span
               className={`flex items-center gap-1 rounded-full px-3 py-1 font-semibold ${online ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}
               role="status"
@@ -188,7 +186,7 @@ export default function Layout() {
         </header>
 
         <main className="w-full max-w-[1680px] mx-auto p-4 sm:p-6 md:p-8 xl:p-10 pb-28 md:pb-10" key={location.pathname}>
-          {ready ? <Outlet /> : <FullScreenMessage>Loading your learning data...</FullScreenMessage>}
+          <Outlet />
         </main>
       </div>
 

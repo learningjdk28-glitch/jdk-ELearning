@@ -9,6 +9,8 @@ import { moduleState } from '../lib/learningPath.js';
 import { MODULE_PAGE_COUNT } from '../lib/courseRules.js';
 import { availableLevels, levelName, pickVersion } from '../lib/pageVersions.js';
 import PageBody from '../components/learn/PageBody.jsx';
+import ReadAloud from '../components/learn/ReadAloud.jsx';
+import { readAloudParts } from '../lib/readAloud.js';
 import { moduleLink } from '../components/learn/PathList.jsx';
 import { EmptyState, ErrorState, LoadingState } from '../components/learn/States.jsx';
 import Activity from '../components/Activity.jsx';
@@ -119,6 +121,7 @@ function PageStep({ data, index, setData, onPrev, onNext, isLast }) {
         </section>
       )}
       <h2 id="page-title" className="text-2xl font-black text-text">{page.title}</h2>
+      <div className="mt-3"><ReadAloud parts={readAloudParts(page.title, page.kind, content)} /></div>
 
       {levels.length > 1 && (
         <fieldset className="mt-4">

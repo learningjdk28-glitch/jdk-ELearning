@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, Layers, Plus, ShieldCheck, Trash2, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { useLearner } from '../context/LearnerContext.jsx';
+import useOnline from '../hooks/useOnline.js';
 import { adminSummary, courseMetrics, listManagedCourses } from '../services/lms.js';
 import { addAdminEmail, listAdminEmails, removeAdminEmail } from '../services/profile.js';
 import { Callout } from '../components/ui.jsx';
@@ -12,7 +12,7 @@ import { DetailsForm, Loading, PasswordSection, ProfileHeader, Result, Section, 
 /** Instructor profile: identity, contact details, what they teach, and (super administrator) who may teach. */
 export default function InstructorProfile() {
   const { user, isSuperAdmin, setDisplayName } = useAuth();
-  const { online } = useLearner();
+  const online = useOnline();
   const me = useMyProfile(user.id, online);
   const teaching = useTeaching(online);
   const p = me.profile;

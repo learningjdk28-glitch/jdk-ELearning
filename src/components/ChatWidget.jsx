@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Bot, X, Minus, Send, BookOpen, CircleHelp, Lightbulb, ListChecks, BarChart3, TrendingDown, Users, WifiOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { useLearner } from '../context/LearnerContext.jsx';
+import useOnline from '../hooks/useOnline.js';
 import { askAnalytics } from '../services/analyticsChat.js';
 import { askAssistant, isAssistantConfigured } from '../services/assistantChat.js';
 import { offlineAnswer } from '../lib/offlineAnswer.js';
-import { GLOSSARY } from '../data/glossary.js';
+import { loadMyGlossary } from '../services/learn.js';
+import { glossaryForAnswers } from '../lib/offlineAnswer.js';
 
 const MODES = {
   learn: {
@@ -17,7 +18,7 @@ const MODES = {
       ['Explain a topic', BookOpen],
       ['Help with a quiz', CircleHelp],
       ['Give study tips', Lightbulb],
-      ['Tell me about Networking Basics', ListChecks],
+      ['Tell me about my courses', ListChecks],
     ],
   },
   analytics: {
@@ -29,7 +30,7 @@ const MODES = {
       ['Average quiz score by course', BarChart3],
       ['Which competency is weakest?', TrendingDown],
       ['Top 5 most missed questions', ListChecks],
-      ['Module completion for Networking Basics', Users],
+      ['Module completion in my courses', Users],
     ],
   },
 };
@@ -40,7 +41,9 @@ const useFallback = (e) => !e.status || e.status === 404 || e.status >= 500;
 /** Floating chat button and panel, fixed at the bottom right on every page. */
 export default function ChatWidget() {
   const { user, isAdmin } = useAuth();
-  const { online } = useLearner();
+  const online = useOnline();
+  const [glossary, setGlossary] = useState({});
+  useEffect(() => { loadMyGlossary().then((t) => setGlossary(glossaryForAnswers(t))).catch(() => {}); }, []);
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState('learn');
   const [chats, setChats] = useState({ learn: [], analytics: [] });
@@ -84,14 +87,14 @@ export default function ChatWidget() {
         let reply;
         let local = false;
         if (offlineLearn) {
-          reply = offlineAnswer(q, GLOSSARY);
+          reply = offlineAnswer(q, glossary);
           local = true;
         } else {
           try {
             reply = await askAssistant(next.filter((m) => !m.local));
           } catch (e) {
             if (!useFallback(e)) throw e;
-            reply = offlineAnswer(q, GLOSSARY);
+            reply = offlineAnswer(q, glossary);
             local = true;
           }
         }

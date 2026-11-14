@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Bot, Send, WifiOff } from 'lucide-react';
-import { useLearner } from '../context/LearnerContext.jsx';
+import useOnline from '../hooks/useOnline.js';
 import { askAnalytics, isChatbotConfigured } from '../services/analyticsChat.js';
 import { BackHeader, Callout } from '../components/ui.jsx';
 
@@ -8,12 +8,12 @@ const SUGGESTIONS = [
   'How many learners took each quiz, and what was the average score?',
   'Which competency is weakest across all learners?',
   'Which 5 questions are answered wrong most often?',
-  'How many learners finished each Networking Basics module?',
+  'How many learners finished each module of my courses?',
   'Compare average scores of the pre-test and the lesson quizzes.',
 ];
 
 export default function Analytics() {
-  const { online } = useLearner();
+  const online = useOnline();
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);

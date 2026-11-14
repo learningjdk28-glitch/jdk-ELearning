@@ -6,7 +6,7 @@ export const FAQS = [
     id: 'explain-topic',
     keywords: ['explain a topic', 'explain topic', 'explain something'],
     answer:
-      'I can explain any glossary term while you are offline. Type a term such as "router", "IP address", "DNS" or "LAN". You can also open Glossary in the menu to browse all terms.',
+      'I can explain any glossary term of your courses while you are offline. Type the term, or open Glossary in the menu to browse all terms.',
   },
   {
     id: 'quiz-help',
@@ -18,25 +18,25 @@ export const FAQS = [
     id: 'study-tips',
     keywords: ['study tips', 'give study tips', 'how to study', 'study', 'revise', 'remember', 'memorize'],
     answer:
-      'Study tips:\n1. Study in short sessions of 20 to 25 minutes.\n2. Review a lesson again after one day and after one week.\n3. Explain each idea in your own words, out loud.\n4. Use the "explain like I am five" text for hard terms.\n5. Take the module quiz, then revisit the weakest competency.',
+      'Study tips:\n1. Study in short sessions of 20 to 25 minutes.\n2. Review a lesson again after one day and after one week.\n3. Explain each idea in your own words, out loud.\n4. Tap a highlighted term to see a simple explanation.\n5. Take the module quiz, then review the pages you found hardest.',
   },
   {
-    id: 'networking-basics',
-    keywords: ['networking basics', 'tell me about networking', 'modules', 'course'],
+    id: 'my-courses',
+    keywords: ['my courses', 'tell me about my courses', 'modules', 'course'],
     answer:
-      'Networking Basics has four short modules:\n1. Introduction to Computer Networks (LAN, WAN, the internet)\n2. Networking Devices and Connections (routers, switches, modems, Wi-Fi, Ethernet)\n3. IP Addresses and Internet Communication (IP, DNS, packets, web requests)\n4. Network Safety and Basic Troubleshooting\nStart with module 1 and take the quiz at the end of each one.',
+      'Your courses are on the Dashboard, and My Path shows where you are in each one. Every module has a few short pages and then a quick check. Start with the first module that is not done, and take its quiz at the end.',
   },
   {
     id: 'offline',
     keywords: ['offline', 'no internet', 'internet connection', 'sync'],
     answer:
-      'Lessons, quizzes and the glossary work offline. Your results are saved on this device and sync when you are online again. The AI assistant needs internet, so I answer from saved FAQs and the glossary for now.',
+      'Lessons you opened before, or saved for offline use, work without internet, and so does the glossary. Your work is kept on this device and sent when you are online again. The AI assistant needs internet, so I answer from saved FAQs and the glossary for now.',
   },
   {
     id: 'level',
     keywords: ['level', 'foundational', 'standard', 'advanced', 'adaptive'],
     answer:
-      'Your level comes from a fixed rule, not a trained AI model: under 50 percent is foundational, 50 to 79 percent is standard, and 80 percent or more is advanced.',
+      'Your starting version of each page comes from your pre-test score, using score bands your instructor sets. It is a fixed rule, not a trained AI model, and you can switch versions on any page.',
   },
 ];
 
@@ -70,5 +70,8 @@ export function offlineAnswer(question, glossary = {}) {
   if (key && !(faq && FAQS.some((f) => f.keywords.some((k) => norm(k) === q)))) return describeTerm(key, glossary);
   if (faq) return faq.answer;
   const sample = Object.keys(glossary).slice(0, 5).map((k) => k.replace(/[_-]+/g, ' ')).join(', ');
-  return `I am offline, so I can only answer from saved FAQs and the glossary. Try a term${sample ? ` such as ${sample}` : ''}, or ask for study tips, quiz help, or the Networking Basics modules.`;
+  return `I am offline, so I can only answer from saved FAQs and the glossary. Try a term${sample ? ` such as ${sample}` : ''}, or ask for study tips, quiz help, or your courses.`;
 }
+
+/** Glossary rows from the database as the { term: [definition, simple, example] } map the answers use. */
+export const glossaryForAnswers = (terms) => Object.fromEntries((terms || []).map((t) => [t.term, [t.definition, t.simple || t.definition, t.example || 'Ask your instructor for an example.']]));

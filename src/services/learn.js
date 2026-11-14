@@ -60,6 +60,23 @@ async function fetchMyLearning() {
   };
 }
 
+/** Progress page: the learning overview plus best quiz score per quiz and the latest pre-test per course. */
+export async function loadMyProgress() {
+  const [learning, scores] = await Promise.all([loadMyLearning(), withCache('progress', fetchScores)]);
+  return { learning, ...scores };
+}
+
+async function fetchScores() {
+  const client = api();
+  const [attempts, pretests] = await Promise.all([
+    client.from('learning_quiz_attempts').select('quiz_id,score').then(unwrap),
+    client.from('pretest_attempts').select('course_id,score,submitted_at').eq('stage', 'pre').order('submitted_at', { ascending: false }).then(unwrap),
+  ]);
+  const best = {};
+  for (const a of attempts) best[a.quiz_id] = Math.max(best[a.quiz_id] ?? 0, Math.round(Number(a.score)));
+  return { best, pretests };
+}
+
 /** Placement from the latest pre-test attempt (attempts arrive newest first). */
 function placementFor(course, attempts) {
   const latest = attempts.find((a) => a.course_id === course.id) || null;

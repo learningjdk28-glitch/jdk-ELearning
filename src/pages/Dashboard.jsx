@@ -1,7 +1,7 @@
 import { Link, Navigate } from 'react-router-dom';
 import { ArrowRight, BookOpen, ChartColumn, ClipboardList, Lightbulb, Route as RouteIcon, Wifi, WifiOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { useLearner } from '../context/LearnerContext.jsx';
+import useOnline from '../hooks/useOnline.js';
 import useLoad from '../hooks/useLoad.js';
 import { loadMyLearning } from '../services/learn.js';
 import { coursePath } from '../lib/learningPath.js';
@@ -42,13 +42,13 @@ export default function Dashboard() {
 }
 
 function ConnectionStrip() {
-  const { online, sync } = useLearner();
+  const online = useOnline();
   return (
     <div role="status" className={`rounded-2xl border p-4 flex items-center gap-3 ${online ? 'bg-success/10 border-success/30' : 'bg-warning/10 border-warning/30'}`}>
       {online ? <Wifi size={22} className="text-success shrink-0" aria-hidden="true" /> : <WifiOff size={22} className="text-warning shrink-0" aria-hidden="true" />}
       <p className="text-text">
         <span className="font-bold">{online ? 'Online.' : 'Offline.'}</span>{' '}
-        {online ? 'Your progress is saved to your account.' : sync.pending > 0 ? `${sync.pending} change(s) will sync when you reconnect.` : 'Online courses need internet. Offline lessons still work.'}
+        {online ? 'Your progress is saved to your account.' : 'Lessons you opened before still work. Your progress is kept on this device and sent when you reconnect.'}
       </p>
     </div>
   );

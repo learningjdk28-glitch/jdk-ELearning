@@ -1,6 +1,5 @@
 import { displayNameSchema, emailSchema, passwordSchema, profileFieldsSchema } from '../lib/validation.js';
 import { supabase } from '../lib/supabase.js';
-import { db } from '../lib/db.js';
 
 // Profile and account actions. Every call returns data or throws an Error with a readable message.
 
@@ -46,18 +45,6 @@ export async function changePassword(password) {
   if (!parsed.success) throw new Error(parsed.error.issues[0].message);
   const { error } = await supabase.auth.updateUser({ password: parsed.data });
   if (error) throw new Error(error.message);
-}
-
-/** Deletes this learner's cloud progress (RPC) and this device's local copy. */
-export async function resetMyProgress(userId) {
-  need();
-  const { error } = await supabase.rpc('reset_my_progress');
-  if (error) throw new Error(error.message);
-  await db.transaction('rw', db.attempts, db.progress, db.notes, async () => {
-    await db.attempts.where('userId').equals(userId).delete();
-    await db.progress.where('userId').equals(userId).delete();
-    await db.notes.where('userId').equals(userId).delete();
-  });
 }
 
 const PROFILE_FIELDS = 'id, display_name, role, is_super_admin, student_number, phone, address, school_id, created_at';

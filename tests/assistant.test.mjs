@@ -26,7 +26,7 @@ test('does not match a term inside another word', () => {
 test('quick prompts get FAQ answers, not glossary lookups', () => {
   assert.match(offlineAnswer('Give study tips', GLOSSARY), /Study tips/);
   assert.match(offlineAnswer('Help with a quiz', GLOSSARY), /Quiz tips/);
-  assert.match(offlineAnswer('Tell me about Networking Basics', GLOSSARY), /four short modules/);
+  assert.match(offlineAnswer('Tell me about my courses', GLOSSARY), /Dashboard/);
   assert.match(offlineAnswer('Explain a topic', GLOSSARY), /glossary term/);
 });
 

@@ -147,12 +147,13 @@ test('seed: Networking merged the two shortest sections; Digital Literacy kept e
   const merged = await one(`select content from public.learning_units u join public.learning_modules m on m.id = u.module_id
                             where m.course_id = 'networking-basics' and u.title = 'Example and practice' limit 1`);
   assert.match(merged.content, /### Example[\s\S]+### Practice/);
-  const { LESSONS } = await import('../src/data/lessons.js');
-  const phishing = LESSONS.find((l) => l.id === 'phishing');
-  const example = await q(`select u.content body, v.level_id, v.content from public.learning_units u join public.learning_modules m on m.id = u.module_id
-                           left join public.learning_unit_variants v on v.unit_id = u.id where m.title = ${`'${phishing.title}'`} and u.title = 'Example' order by v.level_id`);
-  assert.equal(example[0].body, phishing.levels.standard.example);
-  assert.deepEqual(example.map((r) => [r.level_id, r.content]), [['advanced', phishing.levels.advanced.example], ['foundational', phishing.levels.foundational.example]]);
+  // Every Digital Literacy "Example" page kept its foundational and advanced texts as versions of the page.
+  const example = await q(`select u.content body, array_agg(v.level_id order by v.level_id) levels, bool_and(v.content <> '' and v.content <> u.content) distinct_text
+                           from public.learning_units u join public.learning_modules m on m.id = u.module_id
+                           join public.learning_unit_variants v on v.unit_id = u.id
+                           where m.course_id = 'digital-literacy' and u.title = 'Example' group by u.id, u.content`);
+  assert.ok(example.length >= 5);
+  assert.ok(example.every((r) => r.body && r.distinct_text && r.levels.join() === 'advanced,foundational'), JSON.stringify(example));
 });
 
 test('seed runs once: re-running never overwrites instructor edits or restores deleted content', async () => {

@@ -1,17 +1,11 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { LearnerProvider } from './context/LearnerContext.jsx';
 import Layout from './components/Layout.jsx';
 import RequireAuth from './components/RequireAuth.jsx';
 import Welcome from './pages/Welcome.jsx';
 import { AdminLogin, AdminRegister, ForgotPassword, Login, Register, ResetPassword } from './pages/Auth.jsx';
 import Dashboard from './pages/Dashboard.jsx';
-import Courses from './pages/Courses.jsx';
-import Modes from './pages/Modes.jsx';
 import PreTest from './pages/PreTest.jsx';
-import Results from './pages/Results.jsx';
 import Path from './pages/Path.jsx';
-import Lesson from './pages/Lesson.jsx';
-import PostQuiz from './pages/PostQuiz.jsx';
 import Glossary from './pages/Glossary.jsx';
 import Progress from './pages/Progress.jsx';
 import Profile from './pages/Profile.jsx';
@@ -38,10 +32,6 @@ import AdminSubmissions from './pages/AdminSubmissions.jsx';
 import AdminContent from './pages/AdminContent.jsx';
 import StudentMaterials from './pages/StudentMaterials.jsx';
 import Analytics from './pages/Analytics.jsx';
-import CourseModules from './pages/CourseModules.jsx';
-import ModuleLesson from './pages/ModuleLesson.jsx';
-import ModuleQuiz from './pages/ModuleQuiz.jsx';
-import ModuleResultsPage from './pages/ModuleResultsPage.jsx';
 import RequireRole from './components/RequireRole.jsx';
 import NativeBridge from './components/NativeBridge.jsx';
 
@@ -61,30 +51,20 @@ export default function App() {
       <Route
         element={
           <RequireAuth>
-            <LearnerProvider>
-              <Layout />
-            </LearnerProvider>
+            <Layout />
           </RequireAuth>
         }
       >
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/courses" element={<Courses />} />
+        {['/courses', '/modes', '/results', '/lesson/*', '/quiz/*', '/course/*'].map((p) => <Route key={p} path={p} element={<Navigate to="/catalog" replace />} />)}
         <Route path="/catalog" element={<Catalog />} />
         <Route path="/learn/:courseId" element={<CourseViewer />} />
         <Route path="/learn/:courseId/quiz/:quizId" element={<StudentQuiz />} />
         <Route path="/learn/:courseId/module/:moduleId" element={<ModulePlayer />} />
         <Route path="/learn/:courseId/pretest" element={<CoursePretest />} />
         <Route path="/learn/:courseId/assignment/:assignmentId" element={<AssignmentPage />} />
-        <Route path="/modes" element={<Modes />} />
         <Route path="/pretest" element={<PreTest />} />
-        <Route path="/results" element={<Results />} />
         <Route path="/path" element={<Path />} />
-        <Route path="/lesson/:id" element={<Lesson />} />
-        <Route path="/quiz/:id" element={<PostQuiz />} />
-        <Route path="/course/:courseId" element={<CourseModules />} />
-        <Route path="/course/:courseId/:moduleId" element={<ModuleLesson />} />
-        <Route path="/course/:courseId/:moduleId/quiz" element={<ModuleQuiz />} />
-        <Route path="/course/:courseId/:moduleId/results/:attemptId" element={<ModuleResultsPage />} />
         <Route path="/glossary" element={<Glossary />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/profile" element={<Profile />} />

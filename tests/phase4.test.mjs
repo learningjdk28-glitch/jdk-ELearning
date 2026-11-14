@@ -6,7 +6,6 @@ import assert from 'node:assert/strict';
 import { MODULE_PAGE_COUNT } from '../src/lib/courseRules.js';
 import { coursePath } from '../src/lib/learningPath.js';
 import { questionError } from '../src/lib/questionRules.js';
-import { DIAGNOSTIC_QUESTIONS } from '../src/data/questions.js';
 
 const root = new URL('../', import.meta.url);
 const get = (f) => readFileSync(new URL(f, root), 'utf8');
@@ -134,7 +133,7 @@ test('attempts are visible to the student and the course owner only; nobody writ
 test('seed: Digital Literacy pre-test arrives with every question tagged to its module and is switched on', async () => {
   const rows = await q(`select m.title, count(*)::int n from public.pretest_questions p join public.learning_modules m on m.id = p.module_id
                         where p.course_id = 'digital-literacy' group by m.title, m.position order by m.position`);
-  assert.equal(rows.reduce((n, r) => n + r.n, 0), DIAGNOSTIC_QUESTIONS.length);
+  assert.equal(rows.reduce((n, r) => n + r.n, 0), 16, 'the 16 diagnostic questions');
   assert.equal(rows.length, 5, 'every Digital Literacy module has pre-test questions');
   assert.equal((await one(`select pretest_published p from public.courses where id = 'digital-literacy'`)).p, true);
   assert.equal((await one(`select count(*)::int n from public.pretest_questions where course_id = 'networking-basics'`)).n, 0);

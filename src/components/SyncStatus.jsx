@@ -14,9 +14,8 @@ export function useOutbox() {
 
 /**
  * Header badge: "Synced", "3 waiting to sync", or "1 problem". Opens a list where failed items can be retried or discarded.
- * `legacyPending` counts changes from the older offline lessons, which sync on their own.
  */
-export default function SyncStatus({ online, legacyPending = 0 }) {
+export default function SyncStatus({ online }) {
   const items = useOutbox();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -32,7 +31,7 @@ export default function SyncStatus({ online, legacyPending = 0 }) {
   }, [open]);
 
   const { pending, failed } = outboxSummary(items);
-  const waiting = pending + legacyPending;
+  const waiting = pending;
   const label = failed ? `${failed} problem${failed === 1 ? '' : 's'}`
     : waiting ? `${waiting} waiting to sync`
     : online ? 'Synced' : 'Saved on device';
@@ -55,9 +54,8 @@ export default function SyncStatus({ online, legacyPending = 0 }) {
           <p className="text-sm text-text-muted mt-1">
             {online ? 'Work done offline is sent automatically.' : 'You are offline. Your work is kept here and sent when you reconnect.'}
           </p>
-          {items.length === 0 && legacyPending === 0 ? <p className="text-sm text-success mt-3">Nothing is waiting. Everything is saved online.</p> : (
+          {items.length === 0 ? <p className="text-sm text-success mt-3">Nothing is waiting. Everything is saved online.</p> : (
             <ul className="mt-3 space-y-2 max-h-72 overflow-y-auto">
-              {legacyPending > 0 && <li className="rounded-xl border border-border p-2 text-sm text-text">{legacyPending} change{legacyPending === 1 ? '' : 's'} from offline lessons</li>}
               {items.map((i) => (
                 <li key={i.id} className={`rounded-xl border p-2 text-sm ${i.status === 'failed' ? 'border-danger/40 bg-danger/5' : 'border-border'}`}>
                   <p className="font-semibold text-text">{OUTBOX_KINDS[i.kind] || i.kind}{i.label ? `: ${i.label}` : ''}</p>
