@@ -8,6 +8,7 @@ import { coursePath } from '../lib/learningPath.js';
 import { MODULE_PAGE_COUNT } from '../lib/courseRules.js';
 import PathList, { ProgressBar, continueLink } from '../components/learn/PathList.jsx';
 import { EmptyState, ErrorState, LoadingState } from '../components/learn/States.jsx';
+import { CourseAssignments } from '../components/learn/AssignmentList.jsx';
 
 /** Course home: enroll, see where you are, continue. */
 export default function CourseViewer() {
@@ -61,11 +62,15 @@ export default function CourseViewer() {
       ) : path.items.length === 0 ? (
         <EmptyState title="No modules yet">Your instructor has not published any modules in this course yet.</EmptyState>
       ) : (
+        <>
+        <CourseAssignments courseId={courseId} />
         <section aria-labelledby="path-heading">
           <h2 id="path-heading" className="text-xl font-black text-text mb-4">Your path</h2>
           <PathList courseId={courseId} path={path} />
         </section>
+        </>
       )}
     </div>
   );
 }
+

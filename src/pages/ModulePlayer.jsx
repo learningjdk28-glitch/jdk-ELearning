@@ -11,6 +11,7 @@ import PageBody from '../components/learn/PageBody.jsx';
 import { moduleLink } from '../components/learn/PathList.jsx';
 import { EmptyState, ErrorState, LoadingState } from '../components/learn/States.jsx';
 import Activity from '../components/Activity.jsx';
+import { CourseAssignments } from '../components/learn/AssignmentList.jsx';
 
 /** One module: MODULE_PAGE_COUNT pages, then the "Check" step (activity, quiz, self-study files). */
 export default function ModulePlayer() {
@@ -194,6 +195,7 @@ function CheckStep({ data, state, courseId, goPage, nextModule }) {
         </div>
       ))}
 
+      <CourseAssignments courseId={courseId} moduleId={data.module.id} title="Assignments for this module" />
       {data.materials.length > 0 && <Materials files={data.materials} />}
       {quizzes.length === 0 && data.activities.length === 0 && !state.complete && unread.length === 0 && (
         <p className="text-text-muted">This module has no quiz. You have finished it.</p>

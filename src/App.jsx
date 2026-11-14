@@ -31,6 +31,9 @@ import CourseViewer from './pages/CourseViewer.jsx';
 import ModulePlayer from './pages/ModulePlayer.jsx';
 import CoursePretest from './pages/CoursePretest.jsx';
 import AdminPretest from './pages/AdminPretest.jsx';
+import AssignmentPage from './pages/AssignmentPage.jsx';
+import AdminAssignments from './pages/AdminAssignments.jsx';
+import AdminSubmissions from './pages/AdminSubmissions.jsx';
 import AdminContent from './pages/AdminContent.jsx';
 import StudentMaterials from './pages/StudentMaterials.jsx';
 import Analytics from './pages/Analytics.jsx';
@@ -70,6 +73,7 @@ export default function App() {
         <Route path="/learn/:courseId/quiz/:quizId" element={<StudentQuiz />} />
         <Route path="/learn/:courseId/module/:moduleId" element={<ModulePlayer />} />
         <Route path="/learn/:courseId/pretest" element={<CoursePretest />} />
+        <Route path="/learn/:courseId/assignment/:assignmentId" element={<AssignmentPage />} />
         <Route path="/modes" element={<Modes />} />
         <Route path="/pretest" element={<PreTest />} />
         <Route path="/results" element={<Results />} />
@@ -97,6 +101,8 @@ export default function App() {
         <Route path="/admin/profile" element={<RequireRole role="admin"><InstructorProfile /></RequireRole>} />
         <Route path="/admin/glossary" element={<RequireRole role="admin"><AdminGlossary /></RequireRole>} />
         <Route path="/admin/pretest" element={<RequireRole role="admin"><AdminPretest /></RequireRole>} />
+        <Route path="/admin/assignments" element={<RequireRole role="admin"><AdminAssignments /></RequireRole>} />
+        <Route path="/admin/assignments/:assignmentId" element={<RequireRole role="admin"><AdminSubmissions /></RequireRole>} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
