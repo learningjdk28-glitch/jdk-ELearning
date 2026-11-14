@@ -1,150 +1,127 @@
 import { Link, Navigate } from 'react-router-dom';
-import { BookOpen, ChartColumn, ChevronRight, ClipboardList, Settings, Wifi, WifiOff } from 'lucide-react';
+import { ArrowRight, BookOpen, ChartColumn, ClipboardList, Lightbulb, Route as RouteIcon, Wifi, WifiOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useLearner } from '../context/LearnerContext.jsx';
-import { COURSE } from '../data/course.js';
-import { LESSONS } from '../data/lessons.js';
-import { CompetencyBars, LevelBadge } from '../components/ui.jsx';
-import CourseCard from '../components/CourseCard.jsx';
-import { loadCourse } from '../lib/courseContent.js';
+import useLoad from '../hooks/useLoad.js';
+import { loadMyLearning } from '../services/learn.js';
+import { coursePath } from '../lib/learningPath.js';
+import { ProgressBar, continueLink } from '../components/learn/PathList.jsx';
+import { ErrorState, LoadingState } from '../components/learn/States.jsx';
 
-function MiniLaptop() {
+const QUICK = [
+  ['/path', 'My Path', 'Where you are and what is next', RouteIcon],
+  ['/glossary', 'Glossary', 'Terms in plain words', Lightbulb],
+  ['/progress', 'My progress', 'Scores and growth', ChartColumn],
+  ['/pretest', 'Pre-test', 'Find your starting point', ClipboardList],
+];
+
+/** Student home: continue where you left off, your courses, and shortcuts. Every course comes from the database. */
+export default function Dashboard() {
+  const { user, isAdmin } = useAuth();
+  if (isAdmin) return <Navigate to="/admin" replace />;
+  const name = user?.name || user?.email?.split('@')[0] || 'there';
   return (
-    <div className="relative w-28 shrink-0 hidden sm:block" aria-hidden="true">
-      <div className="rounded-xl bg-indigo-300/60 p-1.5">
-        <div className="rounded-lg bg-white p-1.5">
-          <div className="h-1.5 w-2/3 rounded bg-brand mb-1" />
-          <div className="flex items-end gap-1">
-            <div className="w-3 h-5 rounded-sm bg-green-500" />
-            <div className="w-3 h-3 rounded-sm bg-blue-500" />
-            <div className="ml-auto w-5 h-5 rounded-full bg-indigo-100" />
-          </div>
-        </div>
-      </div>
-      <div className="h-1.5 rounded-full bg-indigo-300/70 mt-1 mx-[-6px]" />
+    <div className="max-w-6xl mx-auto space-y-6 pb-8">
+      <header>
+        <h1 className="text-3xl sm:text-4xl font-black text-text">Hi, {name}!</h1>
+        <p className="text-text-muted mt-1 text-lg">Ready to keep learning?</p>
+      </header>
+      <ConnectionStrip />
+      <MyLearning />
+      <nav aria-label="Shortcuts" className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        {QUICK.map(([to, title, desc, Icon]) => (
+          <Link key={to} to={to} className="panel p-5 hover:border-brand/40">
+            <span className="tile bg-brand-soft text-brand"><Icon size={24} aria-hidden="true" /></span>
+            <span className="block font-extrabold text-lg text-text mt-4 leading-tight">{title}</span>
+            <span className="block muted mt-1">{desc}</span>
+          </Link>
+        ))}
+      </nav>
     </div>
   );
 }
 
-export default function Dashboard() {
-  const { user, isAdmin } = useAuth();
-  const { completedIds, completedModuleIds, hasDiagnostic, next, stats, sync, online } = useLearner();
-  let nb = null;
-  try {
-    nb = loadCourse('networking-basics');
-  } catch {
-    nb = null;
+function ConnectionStrip() {
+  const { online, sync } = useLearner();
+  return (
+    <div role="status" className={`rounded-2xl border p-4 flex items-center gap-3 ${online ? 'bg-success/10 border-success/30' : 'bg-warning/10 border-warning/30'}`}>
+      {online ? <Wifi size={22} className="text-success shrink-0" aria-hidden="true" /> : <WifiOff size={22} className="text-warning shrink-0" aria-hidden="true" />}
+      <p className="text-text">
+        <span className="font-bold">{online ? 'Online.' : 'Offline.'}</span>{' '}
+        {online ? 'Your progress is saved to your account.' : sync.pending > 0 ? `${sync.pending} change(s) will sync when you reconnect.` : 'Online courses need internet. Offline lessons still work.'}
+      </p>
+    </div>
+  );
+}
+
+function MyLearning() {
+  const { data, loading, error, reload } = useLoad(loadMyLearning, []);
+  if (loading) return <LoadingState label="Loading your courses..." />;
+  if (error) return <ErrorState error={error} onRetry={reload} />;
+
+  const courses = data.courses.map((c) => ({ ...c, path: coursePath(c.modules, data.done, data.passed) }));
+  const active = courses.find((c) => c.path.continue && c.path.percent > 0) || courses.find((c) => c.path.continue);
+
+  if (courses.length === 0) {
+    return (
+      <Link to="/catalog" className="flex items-center gap-4 rounded-3xl bg-brand text-brand-contrast p-6 shadow-lg shadow-brand/20 hover:bg-brand-strong">
+        <span className="flex-1 min-w-0">
+          <span className="block text-sm opacity-90">Start here</span>
+          <span className="block text-2xl font-extrabold mt-1">Choose your first course</span>
+          <span className="block mt-2 opacity-90">{data.catalog.length} course{data.catalog.length === 1 ? '' : 's'} available</span>
+        </span>
+        <span className="w-12 h-12 rounded-full bg-surface-raised text-brand grid place-items-center shrink-0"><ArrowRight size={24} aria-hidden="true" /></span>
+      </Link>
+    );
   }
-  const nbDone = nb ? nb.modules.filter((m) => completedModuleIds.includes(m.id)).length : 0;
-  const done = completedIds.length;
-  const pct = Math.round((done / LESSONS.length) * 100);
-  const name = user?.name || user?.email?.split('@')[0] || 'Learner';
-  const courseTarget = !hasDiagnostic ? '/modes' : next ? `/lesson/${next.lesson.id}` : '/progress';
-
-  const actions = [
-    [ClipboardList, 'bg-indigo-100 text-brand', hasDiagnostic ? 'Retake Pre-Test' : 'Take Pre-Test', 'Know your starting level', '/pretest'],
-    [BookOpen, 'bg-indigo-100 text-brand', 'My Lessons', 'Continue your adaptive learning', '/path'],
-    [ChartColumn, 'bg-amber-100 text-amber-700', 'My Progress', 'Track your growth and competencies', '/progress'],
-    [null, 'bg-indigo-100 text-brand', 'Glossary (ELI5)', 'Understand terms in simple words', '/glossary'],
-  ];
-
-  if (isAdmin) return <Navigate to="/admin" replace />;
 
   return (
     <>
-      <div className="flex items-start justify-between gap-3 mb-5">
-        <div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Hi, {name}!</h1>
-          <p className="text-slate-600 mt-1 text-lg">Ready to continue your learning?</p>
+      {active && <ContinueCard course={active.course} path={active.path} />}
+      <section aria-labelledby="my-courses">
+        <div className="flex items-end justify-between gap-3 mb-3">
+          <h2 id="my-courses" className="text-xl font-black text-text">My courses</h2>
+          {data.catalog.length > 0 && <Link to="/catalog" className="text-sm font-semibold text-brand underline">{data.catalog.length} more to explore</Link>}
         </div>
-        <Link to="/profile" aria-label="Profile and settings" className="hidden md:grid w-12 h-12 place-items-center rounded-2xl bg-white border border-indigo-100">
-          <Settings size={22} />
-        </Link>
-      </div>
-
-      <div
-        className={`rounded-3xl border p-4 flex items-center gap-4 mb-5 ${online ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}
-        role="status"
-      >
-        <div className={`w-14 h-14 rounded-full grid place-items-center text-white shrink-0 ${online ? 'bg-green-600' : 'bg-amber-500'}`}>
-          {online ? <Wifi size={26} aria-hidden="true" /> : <WifiOff size={26} aria-hidden="true" />}
-        </div>
-        <div>
-          <p className={`font-extrabold text-lg ${online ? 'text-green-900' : 'text-amber-900'}`}>{online ? 'Online' : 'Offline Mode'}</p>
-          <p className={`text-sm ${online ? 'text-green-800' : 'text-amber-900'}`}>
-            {online
-              ? 'Everything is also saved on this device.'
-              : sync.pending > 0
-                ? `All learning features work. ${sync.pending} change(s) will sync when you reconnect.`
-                : 'All learning features are available.'}
-          </p>
-        </div>
-      </div>
-
-      <Link
-        to={courseTarget}
-        className="flex items-center gap-4 rounded-3xl bg-brand text-white p-6 mb-5 shadow-lg shadow-indigo-200 hover:bg-brand-dark"
-      >
-        <div className="flex-1 min-w-0">
-          <p className="text-indigo-100 text-sm">{!hasDiagnostic ? 'Start here' : next ? 'Continue' : 'Course complete'}</p>
-          <h2 className="text-2xl font-extrabold leading-tight mt-1">{COURSE.title}</h2>
-          <div className="flex items-center gap-3 mt-5">
-            <div
-              className="flex-1 h-2.5 rounded-full bg-white/25 overflow-hidden"
-              role="progressbar"
-              aria-label="Course progress"
-              aria-valuenow={pct}
-              aria-valuemin={0}
-              aria-valuemax={100}
-            >
-              <div className="h-2.5 rounded-full bg-emerald-300" style={{ width: `${pct}%` }} />
-            </div>
-            <span className="font-bold">{pct}%</span>
-          </div>
-          <p className="text-indigo-100 text-sm mt-2">{done} of {LESSONS.length} lessons completed</p>
-        </div>
-        <MiniLaptop />
-        <span className="w-12 h-12 rounded-full bg-white text-brand grid place-items-center shrink-0">
-          <ChevronRight size={26} aria-hidden="true" />
-        </span>
-      </Link>
-
-      {nb && (
-        <div className="mb-5">
-          <CourseCard to="/course/networking-basics" eyebrow="Course" title={nb.title} pct={Math.round((nbDone / nb.modules.length) * 100)} caption={`${nbDone} of ${nb.modules.length} modules completed`} />
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        {actions.map(([Icon, tile, title, desc, to]) => (
-          <Link key={to} to={to} className="panel p-5 hover:border-indigo-400">
-            <div className={`tile ${tile}`}>
-              {Icon ? <Icon size={24} aria-hidden="true" /> : <span className="font-extrabold text-lg" aria-hidden="true">Aa</span>}
-            </div>
-            <h3 className="font-extrabold text-lg mt-4 leading-tight">{title}</h3>
-            <p className="muted mt-1">{desc}</p>
-          </Link>
-        ))}
-      </div>
-
-      <div className="grid lg:grid-cols-2 gap-5 mt-5">
-        <CompetencyBars stats={stats} title="Your competencies" compact />
-        <div className="panel p-6">
-          <h2 className="font-bold text-lg">Recommended next lesson</h2>
-          {next && hasDiagnostic ? (
-            <>
-              <p className="mt-3 font-extrabold text-xl">{next.lesson.title}</p>
-              <div className="mt-2"><LevelBadge level={next.level} /></div>
-              <p className="muted mt-3">{next.reason}</p>
-              <Link to={`/lesson/${next.lesson.id}`} className="primary mt-4">Open lesson</Link>
-            </>
-          ) : (
-            <p className="muted mt-3">
-              {hasDiagnostic ? 'You have completed every lesson.' : 'Complete the pre-test to receive a recommendation that matches your results.'}
-            </p>
-          )}
-        </div>
-      </div>
+        <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {courses.map(({ course, path }) => (
+            <li key={course.id}>
+              <Link to={`/learn/${encodeURIComponent(course.id)}`} className="panel p-5 block h-full hover:border-brand/40">
+                <span className="flex items-start gap-3">
+                  <span className="tile bg-brand-soft text-brand"><BookOpen size={22} aria-hidden="true" /></span>
+                  <span className="min-w-0">
+                    <span className="block font-extrabold text-text leading-tight">{course.title}</span>
+                    <span className="block text-sm text-text-muted mt-1">{path.finished ? 'Complete' : `${path.modulesDone} of ${path.items.length} modules done`}</span>
+                  </span>
+                </span>
+                <span className="block mt-4"><ProgressBar percent={path.percent} label={`${course.title}: ${path.percent}%`} /></span>
+                <span className="block text-right text-sm font-bold text-text mt-1">{path.percent}%</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
     </>
+  );
+}
+
+function ContinueCard({ course, path }) {
+  const c = path.continue;
+  const where = c.kind === 'quiz' ? 'Quiz next' : `Page ${c.page + 1}`;
+  return (
+    <Link to={continueLink(course.id, path)} className="flex items-center gap-4 rounded-3xl bg-brand text-brand-contrast p-6 shadow-lg shadow-brand/20 hover:bg-brand-strong">
+      <span className="flex-1 min-w-0">
+        <span className="block text-sm opacity-90">{path.percent === 0 ? 'Start' : 'Continue'} · {course.title}</span>
+        <span className="block text-2xl font-extrabold leading-tight mt-1">{c.title}</span>
+        <span className="block mt-1 opacity-90">{where}</span>
+        <span className="mt-4 flex items-center gap-3">
+          <span className="flex-1 h-2.5 rounded-full bg-brand-contrast/25 overflow-hidden" role="progressbar" aria-label="Course progress" aria-valuenow={path.percent} aria-valuemin={0} aria-valuemax={100}>
+            <span className="block h-full rounded-full bg-brand-contrast" style={{ width: `${path.percent}%` }} />
+          </span>
+          <span className="font-bold">{path.percent}%</span>
+        </span>
+      </span>
+      <span className="w-12 h-12 rounded-full bg-surface-raised text-brand grid place-items-center shrink-0"><ArrowRight size={24} aria-hidden="true" /></span>
+    </Link>
   );
 }

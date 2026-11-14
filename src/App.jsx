@@ -28,6 +28,7 @@ import AdminCertificates from './pages/AdminCertificates.jsx';
 import AdminReports from './pages/AdminReports.jsx';
 import Catalog from './pages/Catalog.jsx';
 import CourseViewer from './pages/CourseViewer.jsx';
+import ModulePlayer from './pages/ModulePlayer.jsx';
 import AdminContent from './pages/AdminContent.jsx';
 import StudentMaterials from './pages/StudentMaterials.jsx';
 import Analytics from './pages/Analytics.jsx';
@@ -65,6 +66,7 @@ export default function App() {
         <Route path="/catalog" element={<Catalog />} />
         <Route path="/learn/:courseId" element={<CourseViewer />} />
         <Route path="/learn/:courseId/quiz/:quizId" element={<StudentQuiz />} />
+        <Route path="/learn/:courseId/module/:moduleId" element={<ModulePlayer />} />
         <Route path="/modes" element={<Modes />} />
         <Route path="/pretest" element={<PreTest />} />
         <Route path="/results" element={<Results />} />

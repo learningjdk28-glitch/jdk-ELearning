@@ -1,100 +1,106 @@
-import { useMemo, useState } from 'react';
-import { Check, Search } from 'lucide-react';
-import { GLOSSARY, GLOSSARY_CATEGORIES } from '../data/glossary.js';
-import { LESSONS } from '../data/lessons.js';
-import { Eli5Card } from '../components/Eli5.jsx';
-import { BackHeader } from '../components/ui.jsx';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { BookOpen, Search } from 'lucide-react';
+import useLoad from '../hooks/useLoad.js';
+import { loadMyGlossary } from '../services/learn.js';
+import { TermDetails } from '../components/learn/PageBody.jsx';
+import { EmptyState, ErrorState, LoadingState } from '../components/learn/States.jsx';
 
-const ALL = Object.keys(GLOSSARY).sort();
-
+/** Searchable dictionary of the terms in the student's enrolled courses, written by their instructors. */
 export default function Glossary() {
+  const { data, loading, error, reload } = useLoad(loadMyGlossary, []);
+  const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState('');
-  const [selected, setSelected] = useState(null);
-  const terms = useMemo(() => ALL.filter((t) => t.includes(query.trim().toLowerCase())), [query]);
+  const [selectedId, setSelectedId] = useState(null);
+  const detailRef = useRef(null);
+  const course = params.get('course') || '';
 
-  // Related terms: other terms taught in the same lesson(s).
-  const related = useMemo(() => {
-    if (!selected) return [];
-    const set = new Set();
-    for (const l of LESSONS) if (l.terms.includes(selected)) l.terms.forEach((t) => t !== selected && set.add(t));
-    return [...set].filter((t) => GLOSSARY[t]);
-  }, [selected]);
+  const courses = useMemo(() => [...new Map((data || []).map((t) => [t.course_id, t.courseTitle])).entries()], [data]);
+  const filtered = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return (data || []).filter((t) => (!course || t.course_id === course)
+      && (!needle || [t.term, t.definition, t.simple].some((v) => (v || '').toLowerCase().includes(needle))));
+  }, [data, course, query]);
+  const groups = useMemo(() => {
+    const map = new Map();
+    for (const t of filtered) {
+      const key = t.category || 'Other terms';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(t);
+    }
+    return [...map.entries()].sort(([a], [b]) => (a === 'Other terms') - (b === 'Other terms') || a.localeCompare(b));
+  }, [filtered]);
+  const selected = filtered.find((t) => t.id === selectedId) || null;
+
+  useEffect(() => { if (selected && window.innerWidth < 1024) detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, [selected]);
+
+  if (loading) return <LoadingState label="Loading glossary..." />;
+  if (error) return <ErrorState error={error} onRetry={reload} />;
 
   return (
-    <div className="w-full">
-      <BackHeader title="Glossary (ELI5)" to="/dashboard" />
-      <label className="relative block mb-5 lg:max-w-xl">
-        <span className="sr-only">Search terms</span>
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} aria-hidden="true" />
-        <input
-          className="w-full rounded-2xl border border-indigo-100 bg-white py-3.5 pl-12 pr-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
-          type="search"
-          placeholder="Search a term..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-      </label>
+    <div className="max-w-6xl mx-auto pb-12">
+      <h1 className="text-3xl font-black text-text">Glossary</h1>
+      <p className="text-text-muted mt-1">Terms from your courses, explained by your instructors.</p>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-10 items-start">
-        <div>
-        <h2 className="font-extrabold text-lg mb-3">{selected ? 'All terms' : 'Tap a term to explain it'}</h2>
-        {terms.length === 0 && <p className="muted">No matching term.</p>}
-        <div className="space-y-6">
-          {GLOSSARY_CATEGORIES.map((cat) => {
-            const inCat = cat.terms.filter((t) => terms.includes(t));
-            if (inCat.length === 0) return null;
-            return (
-              <section key={cat.id} aria-labelledby={`cat-${cat.id}`}>
-                <h3 id={`cat-${cat.id}`} className="text-sm font-extrabold tracking-wide text-slate-600 mb-2">
-                  {cat.title.toUpperCase()} <span className="font-semibold">({inCat.length})</span>
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {inCat.map((t) => (
-                    <button
-                      key={t}
-                      aria-pressed={selected === t}
-                      onClick={() => setSelected(t)}
-                      className={`rounded-full border px-4 min-h-[44px] font-semibold capitalize ${selected === t ? 'bg-brand text-white border-brand' : 'bg-white border-indigo-200 text-brand hover:bg-indigo-50'}`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </section>
-            );
-          })}
+      {data.length === 0 ? (
+        <div className="mt-6">
+          <EmptyState title="No glossary terms yet" action={<Link className="primary" to="/catalog"><BookOpen size={16} aria-hidden="true" /> Explore courses</Link>}>
+            Terms appear here for the courses you are enrolled in.
+          </EmptyState>
         </div>
-
-        </div>
-        <aside className="order-first lg:order-none lg:sticky lg:top-24" aria-live="polite">
-        {selected && GLOSSARY[selected] && (
-          <section className="lg:mb-0" aria-label={`Explanation of ${selected}`}>
-            <h2 className="text-3xl font-extrabold capitalize mb-4">{selected}</h2>
-            <Eli5Card term={selected} />
-            {related.length > 0 && (
-              <div className="mt-5">
-                <p className="text-sm font-extrabold tracking-wide text-slate-600">RELATED TERMS</p>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {related.map((t) => (
-                    <button key={t} className="secondary capitalize text-brand" onClick={() => setSelected(t)}>{t}</button>
-                  ))}
-                </div>
-              </div>
+      ) : (
+        <>
+          <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
+            <label className="relative block">
+              <span className="sr-only">Search terms</span>
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden="true" />
+              <input className="field mt-0 pl-11" type="search" placeholder="Search a term or meaning" value={query} onChange={(e) => setQuery(e.target.value)} />
+            </label>
+            {courses.length > 1 && (
+              <label>
+                <span className="sr-only">Course</span>
+                <select className="field mt-0" value={course} onChange={(e) => setParams(e.target.value ? { course: e.target.value } : {})}>
+                  <option value="">All my courses</option>
+                  {courses.map(([id, title]) => <option key={id} value={id}>{title}</option>)}
+                </select>
+              </label>
             )}
-          </section>
-        )}
-
-        {!(selected && GLOSSARY[selected]) && (
-          <div className="hidden lg:grid place-items-center rounded-3xl border border-dashed border-indigo-200 bg-white/60 p-10 text-center text-slate-600">
-            Pick a term to see a simple explanation, a real-world example and related terms.
           </div>
-        )}
-        </aside>
-      </div>
+          <p className="text-sm text-text-muted mt-3" role="status">{filtered.length} term{filtered.length === 1 ? '' : 's'}</p>
 
-      <p className="flex items-center justify-center gap-2 text-green-800 font-semibold mt-8">
-        <Check size={18} aria-hidden="true" /> All {ALL.length} glossary terms are saved for offline use
-      </p>
+          <div className="mt-4 grid gap-5 lg:grid-cols-[1fr_420px] items-start">
+            <div className="space-y-5">
+              {groups.length === 0 && <EmptyState title={`No terms match "${query}"`}>Try a shorter word.</EmptyState>}
+              {groups.map(([category, terms]) => (
+                <section key={category} aria-labelledby={`cat-${category}`}>
+                  <h2 id={`cat-${category}`} className="text-xs font-bold uppercase tracking-wider text-text-muted mb-2">{category} ({terms.length})</h2>
+                  <ul className="grid gap-2 sm:grid-cols-2">
+                    {terms.map((t) => (
+                      <li key={t.id}>
+                        <button type="button" onClick={() => setSelectedId(t.id)} aria-pressed={selectedId === t.id}
+                          className={`w-full text-left rounded-2xl border p-3 ${selectedId === t.id ? 'border-brand bg-brand-soft' : 'border-border bg-surface-raised hover:bg-surface-muted'}`}>
+                          <span className="block font-bold text-text">{t.term}</span>
+                          <span className="block text-sm text-text-muted line-clamp-2">{t.simple || t.definition}</span>
+                          {courses.length > 1 && !course && <span className="block text-xs text-text-muted mt-1">{t.courseTitle}</span>}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+            <aside ref={detailRef} className="panel p-5 lg:sticky lg:top-24" aria-live="polite">
+              {selected ? (
+                <>
+                  <p className="text-xs font-bold uppercase tracking-wider text-text-muted">{selected.courseTitle}</p>
+                  <h2 className="text-2xl font-black text-text mt-1">{selected.term}</h2>
+                  <TermDetails term={selected} />
+                </>
+              ) : <p className="text-text-muted">Choose a term to see its meaning.</p>}
+            </aside>
+          </div>
+        </>
+      )}
     </div>
   );
 }

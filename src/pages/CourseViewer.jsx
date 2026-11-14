@@ -1,20 +1,71 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowUpRight, BookOpen, CheckCircle2, Circle, Download, ExternalLink, FileText, Layers } from 'lucide-react';
-import { useAuth } from '../context/AuthContext.jsx';
-import { listCourses, listModules, listUnits, myEnrollments, myCompletions, enrollMe, setUnitCompleted, listQuizzes } from '../services/lms.js';
-import { getMaterials, openMaterial } from '../services/materials.js';
-import { Notice, panel } from '../components/AdminUI.jsx';
-const builtIn={ 'digital-literacy':'/courses#digital-literacy', 'networking-basics':'/course/networking-basics' };
-export default function CourseViewer(){
- const {courseId}=useParams(),{user,isAdmin}=useAuth();
- const [course,setCourse]=useState(null),[enrolled,setEnrolled]=useState(false),[modules,setModules]=useState([]),[selected,setSelected]=useState(null);
- const [units,setUnits]=useState([]),[files,setFiles]=useState([]),[quizzes,setQuizzes]=useState([]),[done,setDone]=useState([]),[error,setError]=useState(''),[info,setInfo]=useState(''),[busy,setBusy]=useState(false);
- async function refresh(){const[c,e,complete]=await Promise.all([listCourses(),myEnrollments(),myCompletions()]);setCourse(c.find(x=>x.id===courseId)||null);const permitted=isAdmin||e.some(x=>x.course_id===courseId&&x.status==='active');setEnrolled(permitted);setDone(complete.map(x=>x.unit_id));if(permitted){const list=await listModules(courseId);setModules(list);setSelected(old=>list.some(x=>x.id===old)?old:(list[0]?.id||null));}else{setModules([]);setSelected(null);}}
- useEffect(()=>{refresh().catch(e=>setError(e.message));},[courseId]);
- useEffect(()=>{let active=true;setUnits([]);setFiles([]);setQuizzes([]);if(!selected)return()=>{active=false;};Promise.all([listUnits(selected),getMaterials(selected),listQuizzes(selected)]).then(([a,b,c])=>{if(active){setUnits(a);setFiles(b);setQuizzes(c);}}).catch(e=>active&&setError(e.message));return()=>{active=false;};},[selected]);
- async function start(){setBusy(true);setError('');try{await enrollMe(courseId);await refresh();setInfo('Enrollment successful.');}catch(e){setError(e.message);}finally{setBusy(false);}}
- async function complete(id){setBusy(true);setError('');try{const next=!done.includes(id);await setUnitCompleted(id,user.id,next);setDone(v=>next?[...v,id]:v.filter(x=>x!==id));}catch(e){setError(e.message);}finally{setBusy(false);}}
- const current=modules.find(m=>m.id===selected);const totalPublished=units.filter(x=>x.published||isAdmin).length,completedCount=units.filter(x=>done.includes(x.id)).length;
- return <div className="space-y-6 pb-12"><Link to="/catalog" className="inline-flex gap-2 items-center text-indigo-700 font-semibold"><ArrowLeft size={18}/> All courses</Link><header className="rounded-3xl bg-gradient-to-br from-slate-900 to-indigo-800 text-white p-7 sm:p-10"><p className="text-indigo-200 uppercase text-xs tracking-widest">{course?.category||'JDK Learn'} · {course?.level||'Course'}</p><h1 className="text-3xl font-black mt-2">{course?.title||'Loading course…'}</h1><p className="text-indigo-100 mt-3 max-w-2xl">{course?.description}</p>{enrolled&&<p className="text-sm text-indigo-200 mt-5 flex gap-2 items-center"><CheckCircle2 size={16}/> Enrolled</p>}</header><Notice error={error} info={info}/>{!enrolled?<div className={`${panel} p-8 text-center`}><BookOpen className="mx-auto text-indigo-700 mb-4" size={36}/><h2 className="text-xl font-black">Enroll to unlock lessons</h2><p className="text-slate-500 mt-2">Join this course to view its published modules and materials.</p><button className="primary mt-5" disabled={busy} onClick={start}>Enroll for free</button></div>:<div className="grid lg:grid-cols-[300px_1fr] gap-5 items-start"><aside className={`${panel} p-5 lg:sticky lg:top-28`}><h2 className="font-black text-lg mb-4">Course outline</h2>{modules.length===0&&<p className="text-sm text-slate-500">No online modules published yet.</p>}{modules.map((m,i)=><button key={m.id} onClick={()=>setSelected(m.id)} className={`w-full text-left p-4 rounded-xl mb-2 border ${selected===m.id?'border-indigo-400 bg-indigo-50':'border-slate-100 hover:bg-slate-50'}`}><p className="text-xs text-slate-500">Module {i+1}</p><p className="font-bold mt-1">{m.title}</p><p className="text-xs mt-1 text-slate-500">{m.description}</p></button>)}{modules.length===0&&builtIn[courseId]&&<Link to={builtIn[courseId]} className="primary mt-4">Open built-in offline lessons <ArrowUpRight size={16}/></Link>}</aside><main className="space-y-5">{current?<><section className={`${panel} p-6`}><div className="flex justify-between flex-wrap items-center gap-3"><div><p className="uppercase text-xs text-indigo-700 font-bold">Selected module</p><h2 className="text-2xl font-black mt-1">{current.title}</h2></div><p className="text-sm text-slate-600">{completedCount} / {totalPublished} completed</p></div><div className="h-2 bg-slate-100 rounded-full mt-5"><div className="bg-indigo-600 h-2 rounded-full" style={{width:`${totalPublished?completedCount/totalPublished*100:0}%`}}/></div></section><section className={`${panel} p-6 space-y-4`}><h3 className="font-black text-xl flex gap-2 items-center"><Layers className="text-indigo-600"/> Lessons</h3>{units.length===0&&<p className="text-slate-500 text-sm">Lessons will appear when the administrator publishes them.</p>}{units.map((u,i)=><article key={u.id} className="rounded-xl border border-slate-100 p-5"><div className="flex flex-wrap justify-between gap-3 items-center"><div><p className="text-xs text-slate-500">Lesson {i+1} · {u.kind}</p><h4 className="font-bold text-lg mt-1">{u.title}</h4></div><button className="secondary text-xs" disabled={busy} onClick={()=>complete(u.id)}>{done.includes(u.id)?<CheckCircle2 size={17} className="text-emerald-600"/>:<Circle size={17}/>} {done.includes(u.id)?'Completed':'Mark complete'}</button></div>{u.kind==='article'?<p className="whitespace-pre-wrap text-slate-700 leading-relaxed mt-4">{u.content}</p>:<a href={u.content} rel="noopener noreferrer" target="_blank" className="inline-flex items-center gap-2 text-indigo-700 mt-4 font-semibold underline">Open {u.kind==='video'?'video':'resource'} <ExternalLink size={16}/></a>}</article>)}</section><section className={`${panel} p-6 space-y-3`}><h3 className="font-black text-xl flex gap-2 items-center"><BookOpen className="text-indigo-600"/> Quizzes</h3>{quizzes.length===0&&<p className="text-slate-500 text-sm">No quizzes published for this module.</p>}{quizzes.map(q=><Link key={q.id} to={`/learn/${encodeURIComponent(courseId)}/quiz/${q.id}`} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 hover:border-indigo-300"><span className="font-bold">{q.title} <span className="text-sm font-normal text-slate-500">· Pass {q.pass_mark}%</span></span><ExternalLink size={17}/></Link>)}</section><section className={`${panel} p-6 space-y-3`}><h3 className="font-black text-xl flex gap-2 items-center"><FileText className="text-indigo-600"/> Learning materials</h3>{files.length===0&&<p className="text-slate-500 text-sm">No learning materials published yet.</p>}{files.map(f=><button key={f.id} onClick={()=>openMaterial(f).catch(e=>setError(e.message))} className="w-full flex items-center gap-3 p-4 border border-slate-100 hover:border-indigo-300 rounded-xl text-left"><Download className="text-indigo-600" size={20}/><div className="flex-1 min-w-0"><p className="font-bold break-all">{f.title}</p><p className="text-xs text-slate-500">{(f.file_size/1024/1024).toFixed(2)} MB</p></div><ExternalLink size={16}/></button>)}</section></>:<p className="text-slate-500">Select a module to open its lessons and resources.</p>}</main></div>}</div>;
+import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Lightbulb } from 'lucide-react';
+import useLoad from '../hooks/useLoad.js';
+import { loadMyLearning } from '../services/learn.js';
+import { enrollMe } from '../services/lms.js';
+import { coursePath } from '../lib/learningPath.js';
+import { MODULE_PAGE_COUNT } from '../lib/courseRules.js';
+import PathList, { ProgressBar, continueLink } from '../components/learn/PathList.jsx';
+import { EmptyState, ErrorState, LoadingState } from '../components/learn/States.jsx';
+
+/** Course home: enroll, see where you are, continue. */
+export default function CourseViewer() {
+  const { courseId } = useParams();
+  const { data, loading, error, reload } = useLoad(loadMyLearning, []);
+  const [busy, setBusy] = useState(false);
+  const [enrollError, setEnrollError] = useState('');
+
+  if (loading) return <LoadingState label="Loading course..." />;
+  if (error) return <ErrorState error={error} onRetry={reload} />;
+
+  const mine = data.courses.find((c) => c.course.id === courseId);
+  const course = mine?.course || data.catalog.find((c) => c.id === courseId);
+  const back = <Link to="/catalog" className="inline-flex items-center gap-2 font-semibold text-brand"><ArrowLeft size={18} aria-hidden="true" /> All courses</Link>;
+  if (!course) return <div className="space-y-4">{back}<EmptyState title="Course not found">It may be unpublished or removed.</EmptyState></div>;
+
+  async function enroll() {
+    setBusy(true); setEnrollError('');
+    try { await enrollMe(courseId); await reload(); } catch (e) { setEnrollError(e.message); } finally { setBusy(false); }
+  }
+
+  const path = mine ? coursePath(mine.modules, data.done, data.passed) : null;
+  return (
+    <div className="max-w-4xl mx-auto space-y-6 pb-12">
+      {back}
+      <header className="panel p-6 sm:p-8">
+        <p className="text-xs font-bold uppercase tracking-widest text-brand">{course.category || 'Course'} · {course.level || 'All levels'}</p>
+        <h1 className="text-3xl font-black text-text mt-2">{course.title}</h1>
+        {course.description && <p className="text-text-muted mt-3 max-w-2xl">{course.description}</p>}
+        {path && (
+          <div className="mt-6 space-y-2">
+            <div className="flex justify-between text-sm font-semibold text-text"><span>{path.modulesDone} of {path.items.length} modules done</span><span>{path.percent}%</span></div>
+            <ProgressBar percent={path.percent} label={`${course.title} progress`} />
+            <div className="flex flex-wrap gap-3 pt-3">
+              {path.continue && <Link className="primary" to={continueLink(courseId, path)}>{path.percent === 0 ? 'Start the course' : 'Continue'} <ArrowRight size={16} aria-hidden="true" /></Link>}
+              {path.finished && <span className="inline-flex items-center gap-2 font-bold text-success"><CheckCircle2 size={18} aria-hidden="true" /> Course complete</span>}
+              <Link className="secondary" to={`/glossary?course=${encodeURIComponent(courseId)}`}><Lightbulb size={16} aria-hidden="true" /> Glossary</Link>
+            </div>
+          </div>
+        )}
+      </header>
+
+      {!mine ? (
+        <section className="panel p-8 text-center">
+          <BookOpen className="mx-auto text-brand mb-3" size={36} aria-hidden="true" />
+          <h2 className="text-xl font-black text-text">Enroll to start this course</h2>
+          <p className="text-text-muted mt-2">Each module has {MODULE_PAGE_COUNT} short pages and a quick check.</p>
+          {enrollError && <p role="alert" className="mt-3 text-danger">{enrollError}</p>}
+          <button className="primary mt-5" disabled={busy} onClick={enroll}>{busy ? 'Enrolling...' : 'Enroll for free'}</button>
+        </section>
+      ) : path.items.length === 0 ? (
+        <EmptyState title="No modules yet">Your instructor has not published any modules in this course yet.</EmptyState>
+      ) : (
+        <section aria-labelledby="path-heading">
+          <h2 id="path-heading" className="text-xl font-black text-text mb-4">Your path</h2>
+          <PathList courseId={courseId} path={path} />
+        </section>
+      )}
+    </div>
+  );
 }
