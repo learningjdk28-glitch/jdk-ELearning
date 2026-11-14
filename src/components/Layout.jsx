@@ -32,6 +32,7 @@ import ChatWidget from './ChatWidget.jsx';
 import SyncStatus, { useOutbox } from './SyncStatus.jsx';
 import { applyAppearance, currentAppearance, shownMode } from '../lib/applyTheme.js';
 import { saveAppearance } from '../services/profile.js';
+import useCourseBrand from '../hooks/useCourseBrand.js';
 
 const SIDE_LINKS = [
   ['/dashboard', 'Dashboard', Home],
@@ -153,6 +154,7 @@ export default function Layout() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const adminMode = isAdmin && location.pathname.startsWith('/admin');
+  useCourseBrand(location.pathname);
   const mobileTabs = adminMode ? [['/admin', 'Overview', Home], ['/admin/courses', 'Courses', BookOpen], ['/admin/content', 'Modules', Layers], ['/admin/students', 'Students', Users]] : TABS;
 
   useEffect(() => {

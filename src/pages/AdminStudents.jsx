@@ -99,10 +99,15 @@ function QueuePanel({ queue, version }) {
         <p className="text-sm text-text-muted">
           {waiting} waiting.{' '}
           {plan.left === 0 || queue.nextAt
-            ? `The hourly limit is used up; sending continues${stats.next_slot_at || queue.nextAt ? ` from ${time(queue.nextAt || stats.next_slot_at)}` : ' later'} while this page is open.`
-            : 'Press Send to continue.'}
+            ? `The hourly limit is used up; sending continues${stats.next_slot_at || queue.nextAt ? ` from ${time(queue.nextAt || stats.next_slot_at)}` : ' later'}${stats.scheduled ? '' : ' while this page is open'}.`
+            : stats.scheduled ? 'They are sent automatically within 5 minutes, or press Send now.' : 'Press Send to continue.'}
         </p>
       )}
+      <p className="text-xs text-text-muted">
+        {stats.scheduled
+          ? 'Automatic sending is on: waiting invitations go out every 5 minutes, even when this page is closed.'
+          : 'Automatic sending is off: invitations are sent only while this page is open. To turn it on, run supabase/setup/invite_schedule.sql.'}
+      </p>
       {plan.dailyWarning && <p className="text-sm text-warning">More than 300 emails in a day can get the Gmail sender blocked. Consider sending the rest tomorrow.</p>}
       {queue.error && <p role="alert" className="text-sm text-danger">{queue.error}</p>}
     </section>

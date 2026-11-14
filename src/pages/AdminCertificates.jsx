@@ -4,10 +4,11 @@ import { Award, Download, FileUp, RotateCcw, Save } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { listManagedCourses } from '../services/lms.js';
 import {
-  certificateRoster, downloadCertificate, getCertificate, getTemplate, issueCertificates, revokeCertificate, saveFields, templateBytes, uploadTemplate,
+  certificateRoster, downloadCertificate, getCertificate, getTemplate, issueCertificates, removeFont, revokeCertificate, saveFields, templateBytes, templateFontBytes,
+  uploadFont, uploadTemplate,
 } from '../services/certificates.js';
-import { DEFAULT_FIELDS, FIELD_DEFS, FONTS, certificateText, fieldsError, fitSize, inkOf, sampleCertificate, templateFileError } from '../lib/certificateRules.js';
-import { renderCertificate, saveFile } from '../lib/certificatePdf.js';
+import { DEFAULT_FIELDS, FIELD_DEFS, FONTS, QR_SIZE, certificateText, fieldsError, fitSize, fontFileError, inkOf, isQr, sampleCertificate, templateFileError } from '../lib/certificateRules.js';
+import { qrMatrix, renderCertificate, saveFile } from '../lib/certificatePdf.js';
 import { AdminHeading, Empty, Notice, panel } from '../components/AdminUI.jsx';
 
 const label = (key) => FIELD_DEFS.find((d) => d.key === key)?.label || key;
@@ -65,6 +66,7 @@ function Designer({ course, template, setTemplate }) {
   const [fields, setFields] = useState(template?.fields || DEFAULT_FIELDS);
   const [selected, setSelected] = useState('student_name');
   const [bytes, setBytes] = useState(null);
+  const [fontBytes, setFontBytes] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -76,6 +78,29 @@ function Designer({ course, template, setTemplate }) {
     setBytes(null);
     if (template) templateBytes(template).then(setBytes).catch((e) => setError(e.message));
   }, [template]);
+  // The uploaded font, also registered with the browser so the preview shows it.
+  useEffect(() => {
+    setFontBytes(null);
+    if (!template?.font_path) return;
+    templateFontBytes(template).then(async (b) => {
+      setFontBytes(b);
+      const face = new FontFace('CertificateCustom', b);
+      document.fonts.add(await face.load());
+    }).catch((e) => setError(e.message));
+  }, [template]);
+  async function upFont(file) {
+    const problem = fontFileError(file);
+    if (problem) { setError(problem); return; }
+    setBusy(true); setError(''); setInfo('');
+    try { setTemplate(await uploadFont(course.id, file, template)); setInfo('Font uploaded. Names in other alphabets now use it automatically.'); }
+    catch (e) { setError(e.message); } finally { setBusy(false); }
+  }
+  async function dropFont() {
+    if (!window.confirm('Remove the uploaded font? Fields that use it switch to Sans.')) return;
+    setBusy(true); setError(''); setInfo('');
+    try { setTemplate(await removeFont(course.id, { ...template, fields })); setInfo('Font removed.'); }
+    catch (e) { setError(e.message); } finally { setBusy(false); }
+  }
 
   async function upload(file) {
     const problem = templateFileError(file);
@@ -85,15 +110,15 @@ function Designer({ course, template, setTemplate }) {
     catch (e) { setError(e.message); } finally { setBusy(false); }
   }
   async function save() {
-    const problem = fieldsError(fields);
+    const problem = fieldsError(fields, { hasFont: Boolean(template.font_path) });
     if (problem) { setError(problem); return; }
     setBusy(true); setError(''); setInfo('');
-    try { const saved = await saveFields(course.id, fields); setTemplate({ ...template, ...saved, fields }); setInfo('Design saved. New downloads use it straight away.'); }
+    try { const saved = await saveFields(course.id, fields, Boolean(template.font_path)); setTemplate({ ...template, ...saved, fields }); setInfo('Design saved. New downloads use it straight away.'); }
     catch (e) { setError(e.message); } finally { setBusy(false); }
   }
   async function samplePdf() {
     setBusy(true); setError('');
-    try { saveFile(await renderCertificate({ ...template, fields }, bytes, sample, 'Sample certificate'), 'sample-certificate.pdf'); }
+    try { saveFile(await renderCertificate({ ...template, fields }, bytes, sample, 'Sample certificate', fontBytes), 'sample-certificate.pdf'); }
     catch (e) { setError(e.message); } finally { setBusy(false); }
   }
   const update = useCallback((key, patch) => setFields((fs) => fs.map((f) => (f.key === key ? { ...f, ...patch } : f))), []);
@@ -113,6 +138,24 @@ function Designer({ course, template, setTemplate }) {
           <input className="sr-only" type="file" accept="application/pdf,image/png,image/jpeg" disabled={busy} onChange={(e) => { upload(e.target.files?.[0]); e.target.value = ''; }} />
         </label>
         {template && <p className="text-xs text-text-muted mt-2">{template.file_kind.toUpperCase()} · {Math.round(template.page_width)} × {Math.round(template.page_height)} pt</p>}
+        {template && (
+          <div className="mt-4 pt-4 border-t border-border">
+            <h3 className="font-bold text-text">Font for names in other alphabets (optional)</h3>
+            <p className="text-sm text-text-muted mt-1">
+              The built-in fonts print English, Filipino and other Latin-alphabet names. For Chinese, Japanese, Korean, Arabic, Thai and others,
+              download a matching font from <span className="font-semibold">fonts.google.com</span> (for example Noto Sans SC or Noto Sans Arabic) and upload its .ttf or .otf file here (up to 20 MB).
+              It is used automatically for any name the built-in fonts cannot print, and you can also pick it as "Uploaded font".
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <label className="secondary cursor-pointer text-sm">
+                <FileUp size={14} aria-hidden="true" /> {template.font_path ? 'Replace the font' : 'Upload a font'}
+                <input className="sr-only" type="file" accept=".ttf,.otf" disabled={busy} onChange={(e) => { upFont(e.target.files?.[0]); e.target.value = ''; }} />
+              </label>
+              {template.font_path && <button className="secondary text-sm !text-danger" disabled={busy} onClick={dropFont}>Remove font</button>}
+              <span className="text-xs text-text-muted">{template.font_path ? (fontBytes ? 'Font in use.' : 'Loading the font...') : 'No font uploaded.'}</span>
+            </div>
+          </div>
+        )}
       </section>
 
       {template && (
@@ -120,7 +163,7 @@ function Designer({ course, template, setTemplate }) {
           <section className={`${panel} p-4`} aria-label="Live preview">
             <p className="text-sm text-text-muted mb-3">{template.file_kind === 'pdf' ? 'Preview of the PDF with sample values.' : 'Drag a field to move it, or select it and use the arrow keys.'}</p>
             {!bytes ? <p className="muted" role="status">Loading the design...</p>
-              : template.file_kind === 'pdf' ? <PdfPreview template={template} fields={fields} bytes={bytes} text={sample} />
+              : template.file_kind === 'pdf' ? <PdfPreview template={template} fields={fields} bytes={bytes} text={sample} fontBytes={fontBytes} />
               : <ImagePreview template={template} fields={fields} bytes={bytes} text={sample} selected={selected} onSelect={setSelected} onMove={(key, x, y) => update(key, { x, y })} />}
           </section>
 
@@ -134,7 +177,7 @@ function Designer({ course, template, setTemplate }) {
                 </li>
               ))}
             </ul>
-            {active && <FieldEditor field={active} onChange={(patch) => update(active.key, patch)} />}
+            {active && <FieldEditor field={active} hasFont={Boolean(template.font_path)} onChange={(patch) => update(active.key, patch)} />}
             <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
               <button className="primary" disabled={busy || !dirty} onClick={save}><Save size={16} aria-hidden="true" /> {dirty ? 'Save design' : 'Saved'}</button>
               <button className="secondary" disabled={busy || !bytes} onClick={samplePdf}><Download size={16} aria-hidden="true" /> Sample PDF</button>
@@ -147,14 +190,34 @@ function Designer({ course, template, setTemplate }) {
   );
 }
 
-function FieldEditor({ field, onChange }) {
+function FieldEditor({ field, hasFont, onChange }) {
   const pct = (v) => Math.round(v * 1000) / 10;
+  if (isQr(field)) {
+    return (
+      <div className="space-y-3" aria-label="QR code settings">
+        <p className="text-sm text-text-muted">Scanning it opens this certificate's check page. It prints on a small white square so it scans on any background.</p>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="text-sm font-semibold text-text">Size (pt)
+            <input className="field" type="number" min={QR_SIZE[0]} max={QR_SIZE[1]} value={field.size} onChange={(e) => onChange({ size: Number(e.target.value) })} />
+          </label>
+          <label className="text-sm font-semibold text-text">Colour
+            <input className="field h-11 p-1" type="color" value={inkOf(field)} onChange={(e) => onChange({ color: e.target.value })} />
+          </label>
+        </div>
+        {[['x', 'Across (centre)'], ['y', 'Down (centre)']].map(([k, text]) => (
+          <label key={k} className="block text-sm font-semibold text-text">{text}: {pct(field[k])}%
+            <input className="w-full accent-brand" type="range" min={0} max={1000} value={Math.round(field[k] * 1000)} onChange={(e) => onChange({ [k]: Number(e.target.value) / 1000 })} />
+          </label>
+        ))}
+      </div>
+    );
+  }
   return (
     <div className="space-y-3" aria-label={`${label(field.key)} settings`}>
       <div className="grid grid-cols-2 gap-3">
         <label className="text-sm font-semibold text-text">Font
           <select className="field" value={field.font} onChange={(e) => onChange({ font: e.target.value })}>
-            {FONTS.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
+            {FONTS.filter((f) => !f.custom || hasFont).map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
           </select>
         </label>
         <label className="text-sm font-semibold text-text">Size (pt)
@@ -217,6 +280,17 @@ function ImagePreview({ template, fields, bytes, text, selected, onSelect, onMov
       onPointerMove={(e) => { if (drag) { const [x, y] = pos(e); onMove(drag, x, y); } }} onPointerUp={() => setDrag(null)} onPointerLeave={() => setDrag(null)}>
       <img src={url} alt="Certificate design" className="absolute inset-0 w-full h-full" draggable={false} />
       {width > 0 && fields.filter((f) => f.enabled && text[f.key]).map((f) => {
+        if (isQr(f)) {
+          return (
+            <button key={f.key} type="button" aria-label="QR code: drag or use the arrow keys to move"
+              onPointerDown={(e) => { e.currentTarget.setPointerCapture?.(e.pointerId); setDrag(f.key); onSelect(f.key); }}
+              onFocus={() => onSelect(f.key)} onKeyDown={(e) => onKey(e, f)}
+              className={`absolute cursor-move ${selected === f.key ? 'outline outline-2 outline-brand' : ''}`}
+              style={{ left: `${f.x * 100}%`, top: `${f.y * 100}%`, width: `${f.size * scale}px`, height: `${f.size * scale}px`, transform: 'translate(-50%, -50%)' }}>
+              <QrSvg text={text[f.key]} ink={inkOf(f)} />
+            </button>
+          );
+        }
         const pt = fitSize((s) => measure(text[f.key], f.font, s * scale) / scale, f.size, f.maxWidth * Number(template.page_width));
         const css = fontCss(f.font);
         const shift = f.align === 'center' ? '-50%' : f.align === 'right' ? '-100%' : '0';
@@ -234,22 +308,38 @@ function ImagePreview({ template, fields, bytes, text, selected, onSelect, onMov
   );
 }
 
+/** The QR code as an SVG for the preview (the PDF draws the same squares). */
+function QrSvg({ text, ink }) {
+  const [qr, setQr] = useState(null);
+  useEffect(() => { let alive = true; qrMatrix(text).then((m) => alive && setQr(m)); return () => { alive = false; }; }, [text]);
+  if (!qr) return null;
+  const n = qr.size + 4;
+  const cells = [];
+  for (let r = 0; r < qr.size; r += 1) for (let c = 0; c < qr.size; c += 1) if (qr.dark(r, c)) cells.push(<rect key={`${r}-${c}`} x={c + 2} y={r + 2} width="1.02" height="1.02" />);
+  return (
+    <svg viewBox={`0 0 ${n} ${n}`} className="w-full h-full" aria-hidden="true" shapeRendering="crispEdges">
+      <rect width={n} height={n} className="fill-illo-paper" />
+      <g style={{ fill: ink }}>{cells}</g>
+    </svg>
+  );
+}
+
 /** PDF design: the real PDF with sample values, rebuilt a moment after each change. */
-function PdfPreview({ template, fields, bytes, text }) {
+function PdfPreview({ template, fields, bytes, text, fontBytes }) {
   const [url, setUrl] = useState('');
   const [error, setError] = useState('');
   useEffect(() => {
     let alive = true;
     let made = '';
     const t = setTimeout(() => {
-      renderCertificate({ ...template, fields }, bytes, text).then((pdf) => {
+      renderCertificate({ ...template, fields }, bytes, text, 'Preview', fontBytes).then((pdf) => {
         if (!alive) return;
         made = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' }));
         setUrl(made); setError('');
       }).catch((e) => alive && setError(e.message));
     }, 400);
     return () => { alive = false; clearTimeout(t); if (made) URL.revokeObjectURL(made); };
-  }, [template, fields, bytes, text]);
+  }, [template, fields, bytes, text, fontBytes]);
   if (error) return <p role="alert" className="text-danger text-sm">{error}</p>;
   return url ? <iframe title="Certificate preview" src={`${url}#toolbar=0&view=Fit`} className="w-full rounded-lg border border-border bg-surface-muted" style={{ aspectRatio: `${template.page_width} / ${template.page_height}` }} />
     : <p className="muted" role="status">Building the preview...</p>;

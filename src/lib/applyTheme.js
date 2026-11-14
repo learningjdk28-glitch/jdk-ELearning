@@ -5,6 +5,7 @@ import { brandBase, brandShades, resolveMode } from './theme.js';
 const KEY = 'jdk-appearance';
 const BRAND_TOKENS = ['brand', 'brand-strong', 'brand-contrast', 'brand-soft'];
 let current = { theme: 'system', brand: null };
+let courseBrand = null; // a course's own colour while its pages are open
 let media = null;
 
 const deviceDark = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches;
@@ -13,7 +14,7 @@ export const currentAppearance = () => current;
 
 function paintBrand() {
   const root = document.documentElement;
-  const base = brandBase(current.brand);
+  const base = brandBase(courseBrand || current.brand);
   if (!base) { BRAND_TOKENS.forEach((n) => root.style.removeProperty(`--color-${n}`)); return; }
   const shades = brandShades(base, shownMode());
   BRAND_TOKENS.forEach((n) => root.style.setProperty(`--color-${n}`, shades[n]));
@@ -27,6 +28,13 @@ export function applyAppearance(pref) {
   paintBrand();
   window.dispatchEvent(new Event('jdk-appearance'));
   try { localStorage.setItem(KEY, JSON.stringify(current)); } catch { /* storage blocked: applied for this visit only */ }
+}
+
+/** While a course's pages are open its colour (set by the instructor) replaces the brand colour; null when leaving. */
+export function setCourseBrand(value) {
+  if ((value || null) === courseBrand) return;
+  courseBrand = value || null;
+  paintBrand();
 }
 
 /** Called once at start-up, before the first render: last appearance, and follow device changes. */

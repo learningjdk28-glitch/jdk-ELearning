@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { PDFDocument } from 'pdf-lib';
 import { MODULE_PAGE_COUNT } from '../src/lib/courseRules.js';
 import {
-  DEFAULT_FIELDS, MAX_TEMPLATE_BYTES, TEMPLATE_TYPES, anchorX, certificateText, fieldsError, fitSize, imagePageSize, pdfSafeText, templateFileError, verifyUrl, withAllFields,
+  DEFAULT_FIELDS, FONT_TYPES, MAX_FONT_BYTES, MAX_TEMPLATE_BYTES, TEMPLATE_TYPES, anchorX, certificateText, fieldsError, fitSize, imagePageSize, pdfSafeText, templateFileError, verifyUrl, withAllFields,
 } from '../src/lib/certificateRules.js';
 import { measureTemplate, renderCertificate } from '../src/lib/certificatePdf.js';
 
@@ -115,8 +115,9 @@ test('storage: the owner uploads designs; only holders of a valid certificate (a
   assert.equal((await read(S1)).length, 1, 'S1 holds a certificate');
   assert.equal((await read(S3)).length, 0);
   const bucket = await one(`select file_size_limit, allowed_mime_types, public from storage.buckets where id = 'certificate-templates'`);
-  assert.equal(Number(bucket.file_size_limit), MAX_TEMPLATE_BYTES);
-  assert.deepEqual([...bucket.allowed_mime_types].sort(), Object.keys(TEMPLATE_TYPES).sort());
+  assert.equal(Number(bucket.file_size_limit), MAX_FONT_BYTES, 'the bucket allows the largest file: a font');
+  assert.deepEqual([...bucket.allowed_mime_types].sort(), [...Object.keys(TEMPLATE_TYPES), ...Object.values(FONT_TYPES)].sort());
+  assert.ok(MAX_TEMPLATE_BYTES <= MAX_FONT_BYTES);
   assert.equal(bucket.public, false);
 });
 
