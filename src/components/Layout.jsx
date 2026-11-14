@@ -73,6 +73,7 @@ const ADMIN_LINKS = [
   ['/admin', 'Overview', Home],
   ['/admin/courses', 'Courses', BookOpen],
   ['/admin/content', 'Modules & materials', Layers],
+  ['/admin/glossary', 'Glossary', Lightbulb],
   ['/admin/students', 'Students', Users],
   ['/admin/enrollments', 'Enrollments', ClipboardList],
   ['/admin/assessments', 'Assessments', GraduationCap],

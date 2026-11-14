@@ -12,7 +12,6 @@
   "src/pages/Admin.jsx",
   "src/pages/AdminAssessments.jsx",
   "src/pages/AdminCertificates.jsx",
-  "src/pages/AdminContent.jsx",
   "src/pages/AdminCourses.jsx",
   "src/pages/AdminEnrollments.jsx",
   "src/pages/AdminOverview.jsx",
