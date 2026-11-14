@@ -27,7 +27,7 @@ const idsOf = (items, kind, field) => new Set(waiting(items).filter((i) => i.kin
 export function overlayLearning(data, items) {
   if (!data) return data;
   const pages = idsOf(items, 'page', 'unitId');
-  const pretests = idsOf(items, 'pretest', 'courseId');
+  const pretests = new Set(waiting(items).filter((i) => i.kind === 'pretest' && (i.payload.stage || 'pre') === 'pre').map((i) => i.payload.courseId));
   return {
     ...data,
     done: new Set([...data.done, ...pages]),
@@ -49,7 +49,7 @@ export function overlayModule(data, items) {
 
 /** The queued quiz attempt for one quiz, if any. While it waits, the quiz cannot be answered again. */
 export const pendingQuiz = (items, quizId) => waiting(items).find((i) => i.kind === 'quiz' && i.payload.quizId === quizId) || null;
-export const pendingPretest = (items, courseId) => waiting(items).find((i) => i.kind === 'pretest' && i.payload.courseId === courseId) || null;
+export const pendingPretest = (items, courseId, stage = 'pre') => waiting(items).find((i) => i.kind === 'pretest' && i.payload.courseId === courseId && (i.payload.stage || 'pre') === stage) || null;
 export const pendingSubmission = (items, assignmentId) => waiting(items).find((i) => i.kind === 'submission' && i.payload.assignmentId === assignmentId) || null;
 
 /** Assignment list: an assignment with a queued hand-in shows "Waiting to sync". */

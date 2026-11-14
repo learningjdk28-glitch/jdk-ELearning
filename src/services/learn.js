@@ -60,21 +60,26 @@ async function fetchMyLearning() {
   };
 }
 
-/** Progress page: the learning overview plus best quiz score per quiz and the latest pre-test per course. */
+/** Progress page: learning overview, best quiz scores, pre/post-test attempts, study time, and the class comparison. */
 export async function loadMyProgress() {
   const [learning, scores] = await Promise.all([loadMyLearning(), withCache('progress', fetchScores)]);
-  return { learning, ...scores };
+  const compare = {};
+  await Promise.all(learning.courses.map(async ({ course }) => {
+    compare[course.id] = await withCache(`compare:${course.id}`, () => api().rpc('course_compare', { p_course: course.id }).then(unwrap)).catch(() => null);
+  }));
+  return { learning, ...scores, compare };
 }
 
 async function fetchScores() {
   const client = api();
-  const [attempts, pretests] = await Promise.all([
+  const [attempts, pretests, time] = await Promise.all([
     client.from('learning_quiz_attempts').select('quiz_id,score').then(unwrap),
-    client.from('pretest_attempts').select('course_id,score,submitted_at').eq('stage', 'pre').order('submitted_at', { ascending: false }).then(unwrap),
+    client.from('pretest_attempts').select('course_id,stage,score,modules,submitted_at').order('submitted_at').then(unwrap),
+    client.from('study_time').select('module_id,day,seconds').then(unwrap),
   ]);
   const best = {};
   for (const a of attempts) best[a.quiz_id] = Math.max(best[a.quiz_id] ?? 0, Math.round(Number(a.score)));
-  return { best, pretests };
+  return { best, pretests, time };
 }
 
 /** Placement from the latest pre-test attempt (attempts arrive newest first). */
@@ -150,7 +155,7 @@ async function fetchMyGlossary() {
 
 /** Pre-test questions (no answers), this student's attempts, and the levels for naming the result. */
 export const loadPretest = (courseId) => withCache(`pretest:${courseId}`, () => fetchPretest(courseId),
-  (d, items) => ({ ...d, pending: pendingPretest(items, courseId) }));
+  (d, items) => ({ ...d, pending: pendingPretest(items, courseId, 'pre'), pendingPost: pendingPretest(items, courseId, 'post') }));
 
 async function fetchPretest(courseId) {
   const client = api();

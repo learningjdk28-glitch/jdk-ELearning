@@ -57,3 +57,6 @@ export async function runInviteQueue(ids, onProgress = () => {}, shouldStop = ()
 
 /** Everyone enrolled in a course: invited (never signed in) or active, with pages read. */
 export const courseRoster = (courseId) => api().rpc('course_roster', { p_course: courseId }).then(unwrap);
+
+/** Course analytics for the instructor (engagement, pre/post, modules, hardest questions). */
+export const courseAnalytics = (courseId) => api().rpc('course_analytics', { p_course: courseId }).then(unwrap);

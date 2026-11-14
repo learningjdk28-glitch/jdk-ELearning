@@ -22,10 +22,13 @@
   --color-warning: 180 83 9;
   --color-danger: 185 28 28;
   --color-overlay: 0 0 0;                /* modal scrims, shadows */
-  --color-category-1: 21 128 61;         /* data series / competency 1 */
-  --color-category-2: 29 78 216;
-  --color-category-3: 180 83 9;
-  --color-category-4: 109 40 217;
+  /* Chart series, in fixed order. Distinct from the status colours above (success/warning/danger).
+     Validated for colour-blind separation on white; 3 and 4 are below 3:1 contrast, so charts always show value labels.
+     Dark-mode steps (theming phase): 57 135 229 / 217 89 38 / 25 158 112 / 201 133 0. */
+  --color-category-1: 42 120 214;        /* blue */
+  --color-category-2: 235 104 52;        /* orange */
+  --color-category-3: 27 175 122;        /* aqua */
+  --color-category-4: 237 161 0;         /* yellow */
 }
 
 body {

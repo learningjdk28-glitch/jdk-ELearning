@@ -1,20 +1,27 @@
 import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, CheckCheck, ClipboardList, CloudOff, MapPin, RotateCcw } from 'lucide-react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, CheckCheck, ClipboardList, CloudOff, MapPin, RotateCcw, TrendingUp } from 'lucide-react';
 import useLoad from '../hooks/useLoad.js';
 import useOnSynced from '../hooks/useOnSynced.js';
 import { newClientId } from '../services/offline.js';
 import { loadPretest, submitPretest } from '../services/learn.js';
 import { levelName } from '../lib/pageVersions.js';
+import { prePost } from '../lib/analyticsRules.js';
+import { PairedBars } from '../components/charts/Bars.jsx';
 import { moduleLink } from '../components/learn/PathList.jsx';
 import { EmptyState, ErrorState, LoadingState } from '../components/learn/States.jsx';
 
-/** Course pre-test: measures what the student knows and sets where they start and which page version they see. */
+/**
+ * Course pre-test: measures what the student knows and sets where they start and which page version they see.
+ * With ?stage=post it is the post-test: the same questions after the course, compared with the first pre-test.
+ */
 export default function CoursePretest() {
   const { courseId } = useParams();
+  const [params] = useSearchParams();
+  const stage = params.get('stage') === 'post' ? 'post' : 'pre';
   const { data, loading, error, reload } = useLoad(() => loadPretest(courseId), [courseId]);
   const [mode, setMode] = useState(null); // null = decide from data, 'taking', 'result'
-  useOnSynced((item) => item.kind === 'pretest' && item.payload.courseId === courseId, () => { setMode(null); reload(); });
+  useOnSynced((item) => item.kind === 'pretest' && item.payload.courseId === courseId && (item.payload.stage || 'pre') === stage, () => { setMode(null); reload(); });
   const courseLink = `/learn/${encodeURIComponent(courseId)}`;
   const back = <Link to={courseLink} className="inline-flex items-center gap-2 font-semibold text-brand"><ArrowLeft size={18} aria-hidden="true" /> Course</Link>;
 
@@ -26,16 +33,17 @@ export default function CoursePretest() {
     return <ErrorState error={error} onRetry={reload} />;
   }
 
-  const latest = data.attempts.find((a) => a.stage === 'pre') || null;
-  const view = data.pending ? 'pending' : mode || (latest ? 'result' : 'intro');
+  const latest = data.attempts.find((a) => a.stage === stage) || null;
+  const pending = stage === 'post' ? data.pendingPost : data.pending;
+  const view = pending ? 'pending' : mode || (latest ? 'result' : 'intro');
   const questions = data.pretest.questions;
 
   return (
     <div className="max-w-3xl mx-auto pb-16 space-y-5">
       {back}
       <header>
-        <p className="text-sm font-bold uppercase tracking-wider text-text-muted">Pre-test · {data.pretest.course_title}</p>
-        <h1 className="text-2xl sm:text-3xl font-black text-text mt-1">Find your starting point</h1>
+        <p className="text-sm font-bold uppercase tracking-wider text-text-muted">{stage === 'post' ? 'Post-test' : 'Pre-test'} · {data.pretest.course_title}</p>
+        <h1 className="text-2xl sm:text-3xl font-black text-text mt-1">{stage === 'post' ? 'See what you have learned' : 'Find your starting point'}</h1>
       </header>
 
       {view === 'pending' && (
@@ -46,7 +54,20 @@ export default function CoursePretest() {
         </section>
       )}
 
-      {view === 'intro' && (
+      {view === 'intro' && stage === 'post' && (
+        <section className="panel p-6">
+          <TrendingUp size={32} className="text-brand" aria-hidden="true" />
+          <p className="text-text mt-3">
+            The same {questions.length} questions as the pre-test. Your answers are compared with your first pre-test, module by module,
+            so you can see how much you have learned. It does not change where you start or which page versions you see.
+          </p>
+          {questions.length === 0
+            ? <p className="mt-5 text-warning">This test has no questions yet.</p>
+            : <button className="primary mt-5" onClick={() => setMode('taking')}>Start the post-test <ArrowRight size={16} aria-hidden="true" /></button>}
+        </section>
+      )}
+
+      {view === 'intro' && stage === 'pre' && (
         <section className="panel p-6">
           <ClipboardList size={32} className="text-brand" aria-hidden="true" />
           <p className="text-text mt-3">
@@ -64,14 +85,16 @@ export default function CoursePretest() {
         </section>
       )}
 
-      {view === 'taking' && <Taking courseId={courseId} title={data.pretest.course_title} questions={questions} onDone={async () => { await reload(); setMode('result'); }} onCancel={() => setMode(null)} />}
+      {view === 'taking' && <Taking courseId={courseId} stage={stage} title={data.pretest.course_title} questions={questions} onDone={async () => { await reload(); setMode('result'); }} onCancel={() => setMode(null)} />}
 
-      {view === 'result' && latest && <Result attempt={latest} levels={data.levels} courseId={courseId} onRetake={() => setMode('taking')} />}
+      {view === 'result' && latest && stage === 'post' && <PostResult attempts={data.attempts} courseId={courseId} onRetake={() => setMode('taking')} />}
+
+      {view === 'result' && latest && stage === 'pre' && <Result attempt={latest} levels={data.levels} courseId={courseId} onRetake={() => setMode('taking')} />}
     </div>
   );
 }
 
-function Taking({ courseId, title, questions, onDone, onCancel }) {
+function Taking({ courseId, stage, title, questions, onDone, onCancel }) {
   const [answers, setAnswers] = useState({});
   const [clientId] = useState(newClientId);
   const [busy, setBusy] = useState(false);
@@ -83,7 +106,7 @@ function Taking({ courseId, title, questions, onDone, onCancel }) {
     if (answered < questions.length && !window.confirm(`${questions.length - answered} question(s) are blank. They count as "not known yet". Submit anyway?`)) return;
     setBusy(true); setError('');
     try {
-      await submitPretest(courseId, Object.entries(answers).map(([questionId, choice]) => ({ questionId, choice })), clientId, 'pre', `Pre-test: ${title}`);
+      await submitPretest(courseId, Object.entries(answers).map(([questionId, choice]) => ({ questionId, choice })), clientId, stage, `${stage === 'post' ? 'Post-test' : 'Pre-test'}: ${title}`);
       await onDone();
     } catch (err) {
       setError(err.message);
@@ -113,7 +136,7 @@ function Taking({ courseId, title, questions, onDone, onCancel }) {
       ))}
       {error && <p role="alert" className="rounded-xl bg-danger/10 border border-danger/30 text-danger p-3">{error}</p>}
       <div className="flex flex-wrap gap-3">
-        <button className="primary" disabled={busy}>{busy ? 'Checking your answers...' : 'Submit pre-test'}</button>
+        <button className="primary" disabled={busy}>{busy ? 'Checking your answers...' : stage === 'post' ? 'Submit post-test' : 'Submit pre-test'}</button>
         <button type="button" className="secondary" onClick={onCancel} disabled={busy}>Cancel</button>
       </div>
     </form>
@@ -162,6 +185,34 @@ function Result({ attempt, levels, courseId, onRetake }) {
           })}
         </ul>
       </section>
+    </>
+  );
+}
+
+/** Post-test result: first pre-test vs latest post-test, overall and per module. */
+function PostResult({ attempts, courseId, onRetake }) {
+  const pp = prePost(attempts);
+  return (
+    <>
+      <section className="panel p-6" aria-labelledby="post-heading">
+        <h2 id="post-heading" className="text-xl font-black text-text">Your progress</h2>
+        <div className="mt-3 flex flex-wrap items-end gap-6">
+          <p><span className="block text-sm text-text-muted">First pre-test</span><span className="text-3xl font-black text-text tabular-nums">{pp.pre ?? '—'}{pp.pre != null && '%'}</span></p>
+          <p><span className="block text-sm text-text-muted">Post-test</span><span className="text-3xl font-black text-text tabular-nums">{pp.post}%</span></p>
+          {pp.gain != null && <p className={`text-lg font-bold ${pp.gain >= 0 ? 'text-success' : 'text-warning'}`}>{pp.gain >= 0 ? '+' : ''}{pp.gain} points</p>}
+        </div>
+        {pp.pre == null && <p className="text-sm text-text-muted mt-2">You did not take the pre-test, so there is nothing to compare with.</p>}
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link className="primary" to={`/learn/${encodeURIComponent(courseId)}`}>Back to the course</Link>
+          <button className="secondary" onClick={onRetake}><RotateCcw size={16} aria-hidden="true" /> Retake</button>
+        </div>
+      </section>
+      {pp.modules.length > 0 && (
+        <section className="panel p-5 sm:p-6" aria-labelledby="post-by-module">
+          <h2 id="post-by-module" className="font-black text-lg text-text mb-3">By module</h2>
+          <PairedBars label="Pre-test and post-test score by module" rows={pp.modules.map((m) => ({ key: m.module_id, label: m.title, a: m.pre, b: m.post }))} />
+        </section>
+      )}
     </>
   );
 }

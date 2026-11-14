@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, ClipboardCheck, CloudOff, ExternalLink, FileText, Lock, PartyPopper } from 'lucide-react';
 import useLoad from '../hooks/useLoad.js';
+import useStudyTimer from '../hooks/useStudyTimer.js';
 import { completeActivity, loadModule, markPageRead } from '../services/learn.js';
 import { deadlineState, dueLabel } from '../lib/submissionRules.js';
 import { openMaterial } from '../services/materials.js';
@@ -22,6 +23,7 @@ export default function ModulePlayer() {
   const [params, setParams] = useSearchParams();
   const { data, loading, error, reload, setData } = useLoad(() => loadModule(courseId, moduleId), [courseId, moduleId]);
   const courseLink = `/learn/${encodeURIComponent(courseId)}`;
+  useStudyTimer(data?.module?.id);
 
   if (loading) return <LoadingState label="Loading module..." />;
   if (error) return <ErrorState error={error} onRetry={reload} />;

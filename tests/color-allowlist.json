@@ -6,7 +6,6 @@
   "src/pages/AdminCertificates.jsx",
   "src/pages/AdminCourses.jsx",
   "src/pages/AdminOverview.jsx",
-  "src/pages/AdminReports.jsx",
   "src/pages/Analytics.jsx",
   "src/pages/Catalog.jsx",
   "src/pages/StudentCertificates.jsx",

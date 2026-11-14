@@ -46,6 +46,7 @@ export default function CourseViewer() {
             <div className="flex flex-wrap gap-3 pt-3">
               {path.continue && <Link className="primary" to={continueLink(courseId, path)}>{path.continue.kind === 'pretest' ? 'Take the pre-test' : path.percent === 0 ? 'Start the course' : 'Continue'} <ArrowRight size={16} aria-hidden="true" /></Link>}
               {path.finished && <span className="inline-flex items-center gap-2 font-bold text-success"><CheckCircle2 size={18} aria-hidden="true" /> Course complete</span>}
+              {path.finished && course.pretest_published && <Link className="primary" to={`/learn/${encodeURIComponent(courseId)}/pretest?stage=post`}>Take the post-test <ArrowRight size={16} aria-hidden="true" /></Link>}
               <Link className="secondary" to={`/glossary?course=${encodeURIComponent(courseId)}`}><Lightbulb size={16} aria-hidden="true" /> Glossary</Link>
             </div>
             {path.items.length > 0 && <SaveOffline entry={mine} />}

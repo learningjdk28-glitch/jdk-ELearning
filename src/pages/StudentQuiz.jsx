@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Check, ClipboardCheck, Clock, CloudOff, RotateCcw, X } from 'lucide-react';
 import useLoad from '../hooks/useLoad.js';
 import useOnSynced from '../hooks/useOnSynced.js';
+import useStudyTimer from '../hooks/useStudyTimer.js';
 import { newClientId } from '../services/offline.js';
 import { attemptReview, loadQuizPage, submitQuiz } from '../services/quizzes.js';
 import { deadlineState, dueLabel } from '../lib/submissionRules.js';
@@ -14,6 +15,7 @@ export default function StudentQuiz() {
   const { courseId, quizId } = useParams();
   const { data, loading, error, reload, setData } = useLoad(() => loadQuizPage(quizId), [quizId]);
   const [clientId, setClientId] = useState(newClientId);
+  useStudyTimer(data?.quiz?.module_id);
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
