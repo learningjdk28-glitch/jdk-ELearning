@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Lightbulb } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Download, Lightbulb } from 'lucide-react';
 import useLoad from '../hooks/useLoad.js';
 import { loadMyLearning } from '../services/learn.js';
 import { enrollMe } from '../services/lms.js';
+import { courseSavedAt, saveCourseOffline } from '../services/saveOffline.js';
 import { coursePath } from '../lib/learningPath.js';
 import { MODULE_PAGE_COUNT } from '../lib/courseRules.js';
 import PathList, { ProgressBar, continueLink } from '../components/learn/PathList.jsx';
@@ -47,6 +48,7 @@ export default function CourseViewer() {
               {path.finished && <span className="inline-flex items-center gap-2 font-bold text-success"><CheckCircle2 size={18} aria-hidden="true" /> Course complete</span>}
               <Link className="secondary" to={`/glossary?course=${encodeURIComponent(courseId)}`}><Lightbulb size={16} aria-hidden="true" /> Glossary</Link>
             </div>
+            {path.items.length > 0 && <SaveOffline entry={mine} />}
           </div>
         )}
       </header>
@@ -74,3 +76,30 @@ export default function CourseViewer() {
   );
 }
 
+/** Saves the whole course on this device so it can be studied without a connection. */
+function SaveOffline({ entry }) {
+  const courseId = entry.course.id;
+  const [savedAt, setSavedAt] = useState(null);
+  const [progress, setProgress] = useState(null);
+  const [error, setError] = useState('');
+  useEffect(() => { courseSavedAt(courseId).then(setSavedAt).catch(() => {}); }, [courseId]);
+
+  async function save() {
+    setError('');
+    try { setSavedAt(await saveCourseOffline(entry, (done, total) => setProgress({ done, total }))); }
+    catch (e) { setError(e.message); }
+    finally { setProgress(null); }
+  }
+
+  return (
+    <div className="pt-3 border-t border-border mt-4 flex flex-wrap items-center gap-3">
+      <button className="secondary text-sm" onClick={save} disabled={Boolean(progress)}>
+        <Download size={16} aria-hidden="true" /> {progress ? `Saving ${progress.done} of ${progress.total}...` : savedAt ? 'Update offline copy' : 'Save for offline'}
+      </button>
+      <span className="text-sm text-text-muted" role="status">
+        {savedAt ? `Saved on this device ${new Date(savedAt).toLocaleString()}. Open it any time, even without internet.` : 'Save every module on this device to study without internet.'}
+      </span>
+      {error && <p role="alert" className="w-full text-sm text-danger">{error}</p>}
+    </div>
+  );
+}

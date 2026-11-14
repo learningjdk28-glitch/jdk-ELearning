@@ -3,8 +3,6 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   BookOpen,
   ChartColumn,
-  Cloud,
-  CloudOff,
   GraduationCap,
   Home,
   Bot,
@@ -30,6 +28,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useLearner } from '../context/LearnerContext.jsx';
 import { FullScreenMessage } from './ui.jsx';
 import ChatWidget from './ChatWidget.jsx';
+import SyncStatus, { useOutbox } from './SyncStatus.jsx';
 
 const SIDE_LINKS = [
   ['/dashboard', 'Dashboard', Home],
@@ -50,27 +49,6 @@ const TABS = [
   ['/progress', 'Progress', ChartColumn],
   ['/glossary', 'Glossary', Lightbulb],
 ];
-
-function SyncBadge() {
-  const { sync, online } = useLearner();
-  const pending = sync.pending;
-  if (!online) {
-    return (
-      <span className="hidden sm:inline-flex items-center gap-1 text-xs text-warning">
-        <CloudOff size={14} /> {pending > 0 ? `${pending} change${pending === 1 ? '' : 's'} waiting` : 'Saved on device'}
-      </span>
-    );
-  }
-  if (sync.state === 'syncing') return <span className="hidden sm:inline text-xs text-text-muted">Syncing...</span>;
-  if (sync.state === 'error') {
-    return <span className="hidden sm:inline text-xs text-danger" title={sync.message}>Sync problem</span>;
-  }
-  return (
-    <span className="hidden sm:inline-flex items-center gap-1 text-xs text-success">
-      <Cloud size={14} /> {pending > 0 ? `${pending} pending` : 'Synced'}
-    </span>
-  );
-}
 
 const ADMIN_LINKS = [
   ['/admin', 'Overview', Home],
@@ -108,13 +86,13 @@ function SidebarContent({ adminMode, onLogout }) {
       <div className="mt-auto pt-7">
         {adminMode && <div className="rounded-2xl bg-brand/40 p-4 mb-5 text-text-inverse"><ShieldCheck size={24} className="text-text-inverse-muted mb-2"/><p className="font-bold text-sm">Instructor workspace</p><p className="text-xs text-text-inverse-muted mt-1">Publish content, manage enrollments, and help learners grow.</p></div>}
         <button type="button" className={adminMode ? 'flex gap-3 items-center w-full p-3 text-text-inverse-muted hover:text-text-inverse hover:bg-text-inverse/10 rounded-xl' : 'navlink w-full text-left'} onClick={onLogout}><LogOut size={19} aria-hidden="true"/> Log out</button>
-        {!adminMode && <p className="mt-4 text-xs text-text-muted">Your offline learning progress syncs when connected.</p>}
+        {!adminMode && <p className="mt-4 text-xs text-text-muted">Lessons you open are saved on this device. Work done offline syncs when you reconnect.</p>}
       </div>
     </>
   );
 }
 
-function ConfirmLogout({ onCancel, onConfirm, busy }) {
+function ConfirmLogout({ onCancel, onConfirm, busy, waiting }) {
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && !busy && onCancel();
     window.addEventListener('keydown', onKey);
@@ -132,6 +110,7 @@ function ConfirmLogout({ onCancel, onConfirm, busy }) {
       >
         <h2 id="logout-title" className="text-xl font-extrabold text-text">Log out?</h2>
         <p id="logout-text" className="text-text-muted mt-2">You will need to log in again to continue learning. Your progress stays saved.</p>
+        {waiting > 0 && <p className="text-warning text-sm mt-2">{waiting} item{waiting === 1 ? ' is' : 's are'} still waiting to sync. {waiting === 1 ? 'It stays' : 'They stay'} on this device and {waiting === 1 ? 'is' : 'are'} sent the next time you log in here with a connection.</p>}
         <div className="mt-5 flex justify-end gap-3">
           <button type="button" className="secondary min-h-[44px]" autoFocus onClick={onCancel} disabled={busy}>Cancel</button>
           <button type="button" className="primary min-h-[44px]" onClick={onConfirm} disabled={busy}>{busy ? 'Logging out...' : 'OK'}</button>
@@ -143,7 +122,8 @@ function ConfirmLogout({ onCancel, onConfirm, busy }) {
 
 export default function Layout() {
   const { user, isAdmin, signOut } = useAuth();
-  const { ready, online } = useLearner();
+  const { ready, online, sync } = useLearner();
+  const outbox = useOutbox();
   const location = useLocation();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -195,7 +175,7 @@ export default function Layout() {
           </div>
           <div className="hidden md:block font-bold text-lg">{adminMode ? 'JDK Learn / Instructor' : 'Learn at your own pace'}</div>
           <div className="flex items-center gap-3 text-sm">
-            {!adminMode && <SyncBadge />}
+            {!adminMode && <SyncStatus online={online} legacyPending={sync.pending} />}
             <span
               className={`flex items-center gap-1 rounded-full px-3 py-1 font-semibold ${online ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}
               role="status"
@@ -212,7 +192,7 @@ export default function Layout() {
         </main>
       </div>
 
-      {confirmOpen && <ConfirmLogout busy={loggingOut} onCancel={() => setConfirmOpen(false)} onConfirm={logout} />}
+      {confirmOpen && <ConfirmLogout busy={loggingOut} waiting={outbox.length} onCancel={() => setConfirmOpen(false)} onConfirm={logout} />}
 
       {!adminMode && <ChatWidget />}
 

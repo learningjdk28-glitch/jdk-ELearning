@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Check, ClipboardCheck, ExternalLink, FileText, Lock, PartyPopper } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, ClipboardCheck, CloudOff, ExternalLink, FileText, Lock, PartyPopper } from 'lucide-react';
 import useLoad from '../hooks/useLoad.js';
 import { completeActivity, loadModule, markPageRead } from '../services/learn.js';
 import { deadlineState, dueLabel } from '../lib/submissionRules.js';
@@ -98,11 +98,11 @@ function PageStep({ data, index, setData, onPrev, onNext, isLast }) {
     if (!data.done.has(page.id)) {
       setSaving(true);
       try {
-        await markPageRead(page.id);
+        await markPageRead(page.id, page.title);
         setData((d) => ({ ...d, done: new Set([...d.done, page.id]) }));
       } catch (e) {
         setSaving(false);
-        setSaveError(e.offline ? 'You are offline, so this page could not be marked as read. Reconnect and try again.' : e.message);
+        setSaveError(e.message);
         return;
       }
       setSaving(false);
@@ -176,6 +176,7 @@ function CheckStep({ data, setData, state, courseId, goPage, nextModule }) {
 
       {quizzes.map((quiz) => {
         const passed = data.passed.has(quiz.id);
+        const waitingSync = data.pendingQuizzes?.has(quiz.id);
         const deadline = deadlineState(quiz.due_at, quiz.allow_late);
         return (
           <section key={quiz.id} className="panel p-5 flex flex-wrap items-center justify-between gap-3">
@@ -188,7 +189,8 @@ function CheckStep({ data, setData, state, courseId, goPage, nextModule }) {
                 </p>
               )}
             </div>
-            {passed ? <span className="inline-flex items-center gap-1 rounded-full bg-success/10 text-success px-3 py-1.5 font-bold text-sm"><Check size={16} aria-hidden="true" /> Passed</span>
+            {waitingSync && !passed ? <Link className="inline-flex items-center gap-1 rounded-full bg-warning/10 text-warning px-3 py-1.5 font-bold text-sm" to={`/learn/${encodeURIComponent(courseId)}/quiz/${quiz.id}`}><CloudOff size={16} aria-hidden="true" /> Waiting to sync</Link>
+              : passed ? <span className="inline-flex items-center gap-1 rounded-full bg-success/10 text-success px-3 py-1.5 font-bold text-sm"><Check size={16} aria-hidden="true" /> Passed</span>
               : unread.length > 0 ? <span className="inline-flex items-center gap-1 text-text-muted text-sm"><Lock size={16} aria-hidden="true" /> Locked</span>
               : deadline === 'closed' ? <Link className="secondary" to={`/learn/${encodeURIComponent(courseId)}/quiz/${quiz.id}`}>See attempts</Link>
               : <Link className="primary" to={`/learn/${encodeURIComponent(courseId)}/quiz/${quiz.id}`}><ClipboardCheck size={16} aria-hidden="true" /> Start quiz</Link>}
@@ -212,10 +214,10 @@ function ModuleActivity({ activity, done, setData }) {
   const [saveError, setSaveError] = useState('');
   const onComplete = useCallback(() => {
     if (done) return;
-    completeActivity(activity.id)
+    completeActivity(activity.id, activity.title)
       .then(() => setData((d) => ({ ...d, activitiesDone: new Set([...d.activitiesDone, activity.id]) })))
-      .catch((e) => setSaveError(e.message.includes('internet') ? 'Well done! You are offline, so this was not saved as completed. Do it again when you are back online.' : e.message));
-  }, [activity.id, done, setData]);
+      .catch((e) => setSaveError(e.message));
+  }, [activity.id, activity.title, done, setData]);
   return (
     <div>
       <p className="text-sm font-semibold text-text-muted mb-2">Practice activity (not graded)</p>

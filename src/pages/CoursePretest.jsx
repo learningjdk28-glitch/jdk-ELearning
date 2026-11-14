@@ -1,19 +1,20 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, CheckCheck, ClipboardList, MapPin, RotateCcw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCheck, ClipboardList, CloudOff, MapPin, RotateCcw } from 'lucide-react';
 import useLoad from '../hooks/useLoad.js';
+import useOnSynced from '../hooks/useOnSynced.js';
+import { newClientId } from '../services/offline.js';
 import { loadPretest, submitPretest } from '../services/learn.js';
 import { levelName } from '../lib/pageVersions.js';
 import { moduleLink } from '../components/learn/PathList.jsx';
 import { EmptyState, ErrorState, LoadingState } from '../components/learn/States.jsx';
-
-const newClientId = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`.replace(/[^0-9a-f-]/g, '0'));
 
 /** Course pre-test: measures what the student knows and sets where they start and which page version they see. */
 export default function CoursePretest() {
   const { courseId } = useParams();
   const { data, loading, error, reload } = useLoad(() => loadPretest(courseId), [courseId]);
   const [mode, setMode] = useState(null); // null = decide from data, 'taking', 'result'
+  useOnSynced((item) => item.kind === 'pretest' && item.payload.courseId === courseId, () => { setMode(null); reload(); });
   const courseLink = `/learn/${encodeURIComponent(courseId)}`;
   const back = <Link to={courseLink} className="inline-flex items-center gap-2 font-semibold text-brand"><ArrowLeft size={18} aria-hidden="true" /> Course</Link>;
 
@@ -26,7 +27,7 @@ export default function CoursePretest() {
   }
 
   const latest = data.attempts.find((a) => a.stage === 'pre') || null;
-  const view = mode || (latest ? 'result' : 'intro');
+  const view = data.pending ? 'pending' : mode || (latest ? 'result' : 'intro');
   const questions = data.pretest.questions;
 
   return (
@@ -36,6 +37,14 @@ export default function CoursePretest() {
         <p className="text-sm font-bold uppercase tracking-wider text-text-muted">Pre-test · {data.pretest.course_title}</p>
         <h1 className="text-2xl sm:text-3xl font-black text-text mt-1">Find your starting point</h1>
       </header>
+
+      {view === 'pending' && (
+        <section className="panel p-6 border-warning/40" role="status">
+          <p className="flex items-center gap-2 font-black text-lg text-text"><CloudOff size={20} className="text-warning" aria-hidden="true" /> Submitted — will be scored when you reconnect</p>
+          <p className="text-text-muted mt-2">Your answers are saved on this device. They are sent automatically when you are online, and your starting point appears here. Until then you can start from the first module.</p>
+          <Link to={courseLink} className="secondary mt-4">Back to the course</Link>
+        </section>
+      )}
 
       {view === 'intro' && (
         <section className="panel p-6">
@@ -55,14 +64,14 @@ export default function CoursePretest() {
         </section>
       )}
 
-      {view === 'taking' && <Taking courseId={courseId} questions={questions} onDone={async () => { await reload(); setMode('result'); }} onCancel={() => setMode(null)} />}
+      {view === 'taking' && <Taking courseId={courseId} title={data.pretest.course_title} questions={questions} onDone={async () => { await reload(); setMode('result'); }} onCancel={() => setMode(null)} />}
 
       {view === 'result' && latest && <Result attempt={latest} levels={data.levels} courseId={courseId} onRetake={() => setMode('taking')} />}
     </div>
   );
 }
 
-function Taking({ courseId, questions, onDone, onCancel }) {
+function Taking({ courseId, title, questions, onDone, onCancel }) {
   const [answers, setAnswers] = useState({});
   const [clientId] = useState(newClientId);
   const [busy, setBusy] = useState(false);
@@ -74,10 +83,10 @@ function Taking({ courseId, questions, onDone, onCancel }) {
     if (answered < questions.length && !window.confirm(`${questions.length - answered} question(s) are blank. They count as "not known yet". Submit anyway?`)) return;
     setBusy(true); setError('');
     try {
-      await submitPretest(courseId, Object.entries(answers).map(([questionId, choice]) => ({ questionId, choice })), clientId);
+      await submitPretest(courseId, Object.entries(answers).map(([questionId, choice]) => ({ questionId, choice })), clientId, 'pre', `Pre-test: ${title}`);
       await onDone();
     } catch (err) {
-      setError(err.offline ? 'You are offline. Your answers are still here; reconnect and submit again.' : err.message);
+      setError(err.message);
       setBusy(false);
     }
   }

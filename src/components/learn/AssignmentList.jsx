@@ -23,7 +23,7 @@ export default function AssignmentList({ courseId, assignments }) {
   return (
     <ul className="space-y-2">
       {assignments.map((a) => {
-        const status = submissionStatus(a, a.submission);
+        const status = a.pending ? { label: 'Waiting to sync', tone: 'warning' } : submissionStatus(a, a.submission);
         return (
           <li key={a.id}>
             <Link to={`/learn/${encodeURIComponent(courseId)}/assignment/${a.id}`} className="panel p-4 flex items-center gap-3 hover:border-brand/40">

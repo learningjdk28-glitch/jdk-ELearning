@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, ExternalLink, FileText, Send, Upload } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CloudOff, ExternalLink, FileText, Send, Upload } from 'lucide-react';
 import useLoad from '../hooks/useLoad.js';
+import useOnSynced from '../hooks/useOnSynced.js';
+import { newClientId } from '../services/offline.js';
 import { getAssignment, handIn, openSubmissionFile } from '../services/assignments.js';
 import { ACCEPT_ATTR, SUBMISSION_KINDS, dueLabel, fileError, formatBytes, linkError, submissionStatus, textError } from '../lib/submissionRules.js';
 import PageBody from '../components/learn/PageBody.jsx';
@@ -12,6 +14,7 @@ import { EmptyState, ErrorState, LoadingState } from '../components/learn/States
 export default function AssignmentPage() {
   const { courseId, assignmentId } = useParams();
   const { data, loading, error, reload, setData } = useLoad(() => getAssignment(courseId, assignmentId), [courseId, assignmentId]);
+  useOnSynced((item) => item.kind === 'submission' && item.payload.assignmentId === assignmentId, () => reload());
   const back = <Link to={`/learn/${encodeURIComponent(courseId)}`} className="inline-flex items-center gap-2 font-semibold text-brand"><ArrowLeft size={18} aria-hidden="true" /> Course</Link>;
 
   if (loading) return <LoadingState label="Loading assignment..." />;
@@ -44,8 +47,14 @@ export default function AssignmentPage() {
 
       {sub && <Submitted sub={sub} />}
 
-      {canHandIn ? (
-        <HandInForm assignment={data} existing={sub} pastDue={pastDue} onDone={(saved) => setData((d) => ({ ...d, submission: saved }))} />
+      {data.pending ? (
+        <section className="panel p-5 border-warning/40" role="status">
+          <p className="flex items-center gap-2 font-bold text-text"><CloudOff size={18} className="text-warning" aria-hidden="true" /> Handed in on this device — will be sent when you reconnect</p>
+          <p className="text-sm text-text-muted mt-1">It is sent automatically when you are online. The deadline is checked when it reaches the server.</p>
+        </section>
+      ) : canHandIn ? (
+        <HandInForm assignment={data} existing={sub} pastDue={pastDue}
+          onDone={(saved) => setData((d) => (saved.queued ? { ...d, pending: { createdAt: new Date().toISOString() } } : { ...d, submission: saved }))} />
       ) : !sub && (
         <p className="panel p-5 text-danger" role="status">The deadline has passed and this assignment no longer accepts work.</p>
       )}
@@ -100,9 +109,10 @@ function HandInForm({ assignment, existing, pastDue, onDone }) {
     if (existing && !window.confirm('Replace what you handed in before?')) return;
     setBusy(true);
     try {
-      const saved = await handIn(assignment, kind, { url, body, file }, existing);
+      const saved = await handIn(assignment, kind, { url, body, file }, existing, newClientId());
       onDone(saved);
       setUrl(''); setBody(''); setFile(null);
+      if (saved.queued) return;
       setDone(saved.is_late ? 'Handed in. It was after the deadline, so it is marked late.' : 'Handed in on time.');
     } catch (err) {
       setProblem(err.message);

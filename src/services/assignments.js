@@ -1,6 +1,8 @@
 import { supabase } from '../lib/supabase.js';
 import { unwrap } from './lms.js';
 import { fileError, linkError, mimeFor, safeFileName, textError } from '../lib/submissionRules.js';
+import { enqueue, newClientId, withCache } from './offline.js';
+import { isNetworkError, overlayAssignments, pendingSubmission } from '../lib/offlineRules.js';
 
 // Assignments and submissions. RLS and database triggers enforce every rule; these checks only give
 // students a clear message before anything is sent.
@@ -22,11 +24,13 @@ async function myId(client) {
   if (!session) throw new Error('Sign in first.');
   return session.user.id;
 }
-const newId = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}${Math.random()}`.replace(/\D/g, '').slice(0, 16));
+const newId = newClientId;
 
 // ---- Student ----
 /** Published assignments of a course with this student's submission for each. */
-export async function listCourseAssignments(courseId) {
+export const listCourseAssignments = (courseId) => withCache(`assignments:${courseId}`, () => fetchCourseAssignments(courseId), overlayAssignments);
+
+async function fetchCourseAssignments(courseId) {
   const client = api();
   const assignments = await client.from('assignments').select(FIELDS).eq('course_id', courseId).eq('published', true).order('due_at').then(unwrap);
   const subs = assignments.length
@@ -35,7 +39,10 @@ export async function listCourseAssignments(courseId) {
   return assignments.map((a) => ({ ...a, submission: subs.find((s) => s.assignment_id === a.id) || null }));
 }
 
-export async function getAssignment(courseId, id) {
+export const getAssignment = (courseId, id) => withCache(`assignment:${id}`, () => fetchAssignment(courseId, id),
+  (d, items) => d && ({ ...d, pending: pendingSubmission(items, id) }));
+
+async function fetchAssignment(courseId, id) {
   const client = api();
   const a = await client.from('assignments').select(FIELDS).eq('id', id).eq('course_id', courseId).maybeSingle().then(unwrap);
   if (!a) return null;
@@ -43,13 +50,28 @@ export async function getAssignment(courseId, id) {
   return { ...a, submission: sub };
 }
 
-/** Hands in (or replaces) work. `payload` = { url } | { body } | { file }. */
-export async function handIn(assignment, kind, payload, existing) {
+/**
+ * Hands in (or replaces) work. `payload` = { url } | { body } | { file }.
+ * Without a connection a link or written answer is saved on the device and sent later: returns { queued: true }.
+ * Files always need a connection.
+ */
+export async function handIn(assignment, kind, payload, existing, clientId) {
   const problem = kind === 'link' ? linkError(payload.url) : kind === 'text' ? textError(payload.body) : fileError(payload.file);
   if (problem) throw new Error(problem);
+  try {
+    return await sendHandIn(assignment, kind, payload, existing, clientId);
+  } catch (error) {
+    if (!isNetworkError(error)) throw error;
+    if (kind === 'file') throw Object.assign(new Error('Uploading a file needs an internet connection. Hand in a link instead, or try again when you are online.'), { offline: true });
+    await enqueue('submission', { assignmentId: assignment.id, kind, url: payload.url?.trim(), body: payload.body?.trim() }, { id: clientId, label: assignment.title });
+    return { queued: true };
+  }
+}
+
+async function sendHandIn(assignment, kind, payload, existing, clientId) {
   const client = api();
   const uid = await myId(client);
-  const row = { assignment_id: assignment.id, user_id: uid, kind, link_url: null, body: null, file_path: null, file_name: null, file_size: null, mime_type: null };
+  const row = { assignment_id: assignment.id, user_id: uid, kind, client_id: clientId || newId(), link_url: null, body: null, file_path: null, file_name: null, file_size: null, mime_type: null };
   let uploaded = null;
   if (kind === 'link') row.link_url = payload.url.trim();
   if (kind === 'text') row.body = payload.body.trim();

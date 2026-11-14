@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Check, ClipboardCheck, Clock, RotateCcw, X } from 'lucide-react';
+import { ArrowLeft, Check, ClipboardCheck, Clock, CloudOff, RotateCcw, X } from 'lucide-react';
 import useLoad from '../hooks/useLoad.js';
-import { attemptReview, getQuiz, myAttempts, submitQuiz } from '../services/quizzes.js';
+import useOnSynced from '../hooks/useOnSynced.js';
+import { newClientId } from '../services/offline.js';
+import { attemptReview, loadQuizPage, submitQuiz } from '../services/quizzes.js';
 import { deadlineState, dueLabel } from '../lib/submissionRules.js';
 import { formatDue } from '../components/learn/AssignmentList.jsx';
 import { ErrorState, LoadingState } from '../components/learn/States.jsx';
@@ -10,14 +12,14 @@ import { ErrorState, LoadingState } from '../components/learn/States.jsx';
 /** One quiz: deadline, questions, then the score and a per-question review with explanations. */
 export default function StudentQuiz() {
   const { courseId, quizId } = useParams();
-  const { data, loading, error, reload, setData } = useLoad(async () => {
-    const [quiz, attempts] = await Promise.all([getQuiz(quizId), myAttempts(quizId)]);
-    return { quiz, attempts };
-  }, [quizId]);
+  const { data, loading, error, reload, setData } = useLoad(() => loadQuizPage(quizId), [quizId]);
+  const [clientId, setClientId] = useState(newClientId);
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  // Answers sent from the outbox come back scored: show the result straight away.
+  useOnSynced((item) => item.kind === 'quiz' && item.payload.quizId === quizId, (item, scored) => { setResult(scored); reload(); });
 
   const courseLink = `/learn/${encodeURIComponent(courseId)}`;
   if (loading) return <LoadingState label="Loading quiz..." />;
@@ -33,7 +35,9 @@ export default function StudentQuiz() {
     e.preventDefault();
     setSubmitError(''); setBusy(true);
     try {
-      const r = await submitQuiz(quizId, answers);
+      const r = await submitQuiz(quizId, answers, clientId, quiz.title);
+      setAnswers({}); setClientId(newClientId());
+      if (r.queued) { setData((d) => ({ ...d, pending: { createdAt: new Date().toISOString() } })); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
       setResult(r);
       setData((d) => ({ ...d, attempts: [{ id: r.attempt_id, score: r.score, passed: r.passed, is_late: r.is_late, submitted_at: new Date().toISOString() }, ...d.attempts] }));
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -61,7 +65,17 @@ export default function StudentQuiz() {
 
       {submitError && <p role="alert" className="rounded-xl bg-danger/10 border border-danger/30 text-danger p-3">{submitError}</p>}
 
-      {result ? (
+      {data.pending && !result ? (
+        <section className="panel p-6 border-warning/40" role="status">
+          <p className="flex items-center gap-2 font-black text-lg text-text"><CloudOff size={20} className="text-warning" aria-hidden="true" /> Submitted — will be graded when you reconnect</p>
+          <p className="text-text-muted mt-2">
+            Your answers are saved on this device ({new Date(data.pending.createdAt).toLocaleString()}). They are sent and scored automatically as soon as you are online,
+            and you will see your score here. You cannot answer this quiz again until then.
+          </p>
+          {quiz.due_at && <p className="text-sm text-text-muted mt-2">The deadline is checked when your answers reach the server.</p>}
+          <Link to={moduleLink} className="secondary mt-4">Back to the module</Link>
+        </section>
+      ) : result ? (
         <ResultView quiz={quiz} result={result} canRetake={state !== 'closed'} onRetake={retake} moduleLink={moduleLink} />
       ) : state === 'closed' ? (
         <section className="panel p-6" role="status">

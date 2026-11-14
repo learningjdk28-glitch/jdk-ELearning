@@ -1,6 +1,8 @@
 import { supabase } from '../lib/supabase.js';
 import { unwrap } from './lms.js';
 import { getMaterials } from './materials.js';
+import { currentUserId, enqueue, withCache } from './offline.js';
+import { isNetworkError, overlayLearning, overlayModule, pendingPretest } from '../lib/offlineRules.js';
 
 // Student learning data. Row level security limits every query to what this student may see:
 // published content of courses they are actively enrolled in.
@@ -21,7 +23,9 @@ const inList = (q, col, ids) => (ids.length ? q.in(col, ids) : q.in(col, ['00000
  * { courses: [{ course, modules: [{ ...module, pages:[{id,position,title}], quizzes:[{id,title}] }] }],
  *   done: Set<pageId>, passed: Set<quizId>, catalog: courses not enrolled }
  */
-export async function loadMyLearning() {
+export const loadMyLearning = () => withCache('learning', fetchMyLearning, overlayLearning);
+
+async function fetchMyLearning() {
   const client = api();
   const [enrollments, courses, completions, attempts, pretests] = await Promise.all([
     client.from('course_enrollments').select('course_id,status').eq('status', 'active').then(unwrap),
@@ -68,7 +72,9 @@ function placementFor(course, attempts) {
 }
 
 /** One module for the player: pages with optional versions, levels, activities, quizzes, files, glossary. */
-export async function loadModule(courseId, moduleId) {
+export const loadModule = (courseId, moduleId) => withCache(`module:${courseId}:${moduleId}`, () => fetchModule(courseId, moduleId), overlayModule);
+
+async function fetchModule(courseId, moduleId) {
   const client = api();
   const mod = await client.from('learning_modules').select('id,course_id,title,description,position').eq('id', moduleId).eq('course_id', courseId).maybeSingle().then(unwrap);
   if (!mod) return null;
@@ -99,20 +105,23 @@ export async function loadModule(courseId, moduleId) {
   };
 }
 
-/** Records that the student finished an activity (first time only). */
-export const completeActivity = (activityId) => api().rpc('complete_activity', { p_activity: activityId }).then(unwrap);
+/** Records that the student finished an activity (first time only). Saved on the device first, sent when online. */
+export async function completeActivity(activityId, title = '') {
+  const uid = await currentUserId();
+  return enqueue('activity', { activityId }, { id: `activity:${uid}:${activityId}`, label: title });
+}
 
 /** Records that the signed-in student read a page. Safe to call twice. */
-export async function markPageRead(unitId) {
-  const client = api();
-  const { data: { session } } = await client.auth.getSession();
-  if (!session) throw new Error('Sign in first.');
-  const { error } = await client.from('unit_completions').upsert({ unit_id: unitId, user_id: session.user.id }, { onConflict: 'unit_id,user_id', ignoreDuplicates: true });
-  if (error) throw new Error(error.message);
+/** Records that the signed-in student read a page. Saved on the device first, sent when online. Safe to call twice. */
+export async function markPageRead(unitId, title = '') {
+  const uid = await currentUserId();
+  return enqueue('page', { unitId }, { id: `page:${uid}:${unitId}`, label: title });
 }
 
 /** Glossary of every course this student is enrolled in (RLS returns only those). */
-export async function loadMyGlossary() {
+export const loadMyGlossary = () => withCache('glossary', fetchMyGlossary);
+
+async function fetchMyGlossary() {
   const client = api();
   const [terms, courses] = await Promise.all([
     client.from('glossary_terms').select('id,course_id,slug,term,definition,simple,example,category').order('term').then(unwrap),
@@ -123,7 +132,10 @@ export async function loadMyGlossary() {
 }
 
 /** Pre-test questions (no answers), this student's attempts, and the levels for naming the result. */
-export async function loadPretest(courseId) {
+export const loadPretest = (courseId) => withCache(`pretest:${courseId}`, () => fetchPretest(courseId),
+  (d, items) => ({ ...d, pending: pendingPretest(items, courseId) }));
+
+async function fetchPretest(courseId) {
   const client = api();
   const [pretest, attempts, levels] = await Promise.all([
     client.rpc('get_course_pretest', { p_course: courseId }).then(unwrap),
@@ -134,7 +146,16 @@ export async function loadPretest(courseId) {
   return { pretest, attempts, levels };
 }
 
-/** Graded on the server. clientId makes a repeated submission (double tap, retry) count once. */
-export function submitPretest(courseId, answers, clientId, stage = 'pre') {
-  return api().rpc('submit_course_pretest', { p_course: courseId, p_answers: answers, p_stage: stage, p_client_id: clientId }).then(unwrap);
+/**
+ * Graded on the server. clientId makes a repeated submission (double tap, retry) count once.
+ * Without a connection the answers are saved on the device and scored later: returns { queued: true }.
+ */
+export async function submitPretest(courseId, answers, clientId, stage = 'pre', title = '') {
+  try {
+    return await api().rpc('submit_course_pretest', { p_course: courseId, p_answers: answers, p_stage: stage, p_client_id: clientId }).then(unwrap);
+  } catch (error) {
+    if (!isNetworkError(error)) throw error;
+    await enqueue('pretest', { courseId, answers, stage }, { id: clientId, label: title });
+    return { queued: true };
+  }
 }

@@ -71,10 +71,12 @@ function PretestStep({ courseId, state }) {
         {done ? <Check size={18} /> : <MapPin size={18} />}
       </span>
       <div className={`min-w-0 flex-1 rounded-2xl p-4 ${done ? 'bg-surface-raised border border-border' : 'bg-brand-soft border border-brand/30'}`}>
-        <p className={`text-xs font-bold uppercase tracking-wider ${done ? 'text-success' : 'text-brand'}`}>Pre-test · {done ? 'Done' : 'Start here'}</p>
+        <p className={`text-xs font-bold uppercase tracking-wider ${done ? 'text-success' : 'text-brand'}`}>Pre-test · {done ? 'Done' : state === 'pending' ? 'Waiting to sync' : 'Start here'}</p>
         <p className="font-bold text-text mt-1">Find your starting point</p>
         <p className="text-sm text-text-muted mt-1">
-          {done ? 'Your result set where you start. You can retake it any time.' : 'A short check of what you already know. Your result decides where you begin.'}
+          {done ? 'Your result set where you start. You can retake it any time.'
+            : state === 'pending' ? 'Submitted — will be scored when you reconnect.'
+            : 'A short check of what you already know. Your result decides where you begin.'}
         </p>
         <Link to={`/learn/${encodeURIComponent(courseId)}/pretest`} className={`${done ? 'secondary' : 'primary'} mt-3 text-sm`}>
           {done ? 'See result or retake' : 'Take the pre-test'} <ArrowRight size={16} aria-hidden="true" />

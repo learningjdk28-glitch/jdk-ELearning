@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase.js';
 import { unwrap } from './lms.js';
+import { enqueue, withCache } from './offline.js';
+import { isNetworkError, pendingQuiz } from '../lib/offlineRules.js';
 
 // Quizzes: deadlines, answer review, per-student results. Scoring happens in the database (submit_learning_quiz).
 function api() {
@@ -14,9 +16,26 @@ const QUIZ_FIELDS = 'id,module_id,title,pass_mark,due_at,allow_late,published,cr
 
 export const getQuiz = (quizId) => api().rpc('get_learning_quiz', { p_quiz: quizId }).then(unwrap);
 
-/** answers: { [questionId]: choiceIndex }. Returns score, passed, is_late and the per-question review. */
-export const submitQuiz = (quizId, answers) =>
-  api().rpc('submit_learning_quiz', { p_quiz: quizId, p_answers: Object.entries(answers).map(([questionId, choice]) => ({ questionId, choice })) }).then(unwrap);
+/** The quiz page: questions (never the answers), the student's attempts, and an attempt waiting to be sent. */
+export const loadQuizPage = (quizId) => withCache(`quiz:${quizId}`, async () => {
+  const [quiz, attempts] = await Promise.all([getQuiz(quizId), myAttempts(quizId)]);
+  return { quiz, attempts };
+}, (d, items) => ({ ...d, pending: pendingQuiz(items, quizId) }));
+
+/**
+ * answers: { [questionId]: choiceIndex }. Returns score, passed, is_late and the per-question review.
+ * Without a connection the answers are saved on the device and scored later: returns { queued: true }.
+ */
+export async function submitQuiz(quizId, answers, clientId, title = '') {
+  const list = Object.entries(answers).map(([questionId, choice]) => ({ questionId, choice }));
+  try {
+    return await api().rpc('submit_quiz', { p_quiz: quizId, p_answers: list, p_client_id: clientId }).then(unwrap);
+  } catch (error) {
+    if (!isNetworkError(error)) throw error;
+    await enqueue('quiz', { quizId, answers: list }, { id: clientId, label: title });
+    return { queued: true };
+  }
+}
 
 /** The student's attempts at one quiz, newest first. */
 export const myAttempts = (quizId) => api().from('learning_quiz_attempts')
