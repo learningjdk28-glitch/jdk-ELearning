@@ -1,5 +1,4 @@
 [
-  "src/components/Activity.jsx",
   "src/components/AudioLesson.jsx",
   "src/components/ChatWidget.jsx",
   "src/components/CourseCard.jsx",
@@ -10,7 +9,6 @@
   "src/components/QuizRunner.jsx",
   "src/components/VisualFlow.jsx",
   "src/pages/Admin.jsx",
-  "src/pages/AdminAssessments.jsx",
   "src/pages/AdminCertificates.jsx",
   "src/pages/AdminCourses.jsx",
   "src/pages/AdminEnrollments.jsx",
@@ -30,6 +28,5 @@
   "src/pages/Results.jsx",
   "src/pages/StudentCertificates.jsx",
   "src/pages/StudentMaterials.jsx",
-  "src/pages/StudentQuiz.jsx",
   "src/pages/Welcome.jsx"
 ]

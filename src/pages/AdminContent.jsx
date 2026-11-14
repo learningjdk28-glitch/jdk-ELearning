@@ -256,12 +256,11 @@ function ModuleEditor({ module, levels, busy, run, reloadModules }) {
           {extras.activities.map((a) => (
             <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border p-3">
               <span className="font-semibold text-text">Activity ({a.kind}): {a.title}</span>
-              <Status value={a.published} />
+              <span className="flex items-center gap-2"><Status value={a.published} /><Link className="secondary text-sm" to="/admin/activities">Edit activity</Link></span>
             </li>
           ))}
-          {extras.quizzes.length + extras.activities.length === 0 && <li className="muted">No quiz or activity yet. Add a quiz on the Assessments page.</li>}
+          {extras.quizzes.length + extras.activities.length === 0 && <li className="muted">No quiz or activity yet. Add one on the Quizzes or Activities page.</li>}
         </ul>
-        {extras.activities.length > 0 && <p className="muted mt-3">Activity editing arrives with the assessment tools (Phase 5).</p>}
       </section>
 
       <Materials moduleId={module.id} materials={extras.materials} busy={busy} run={run} reload={load} />

@@ -97,3 +97,31 @@ export const deletePretestQuestion = (id) => api().from('pretest_questions').del
 
 export const setPretestSettings = (courseId, fields) =>
   api().from('courses').update(fields).eq('id', courseId).select('id,pretest_published,pretest_pass_mark').single().then(unwrap);
+
+/* ---------- activities ---------- */
+
+/** All activities of a module (drafts included) with how many enrolled students finished each. */
+export async function getActivitiesAdmin(moduleId) {
+  const client = api();
+  const [rows, progress] = await Promise.all([
+    client.from('learning_activities').select('id,module_id,kind,title,prompt,spec,position,published').eq('module_id', moduleId).order('position').order('created_at').then(unwrap),
+    client.rpc('activity_progress', { p_module: moduleId }).then(unwrap),
+  ]);
+  const byId = Object.fromEntries(progress.map((p) => [p.activity_id, p]));
+  return {
+    activities: rows.map((a) => ({ ...a, completed: Number(byId[a.id]?.completed ?? 0) })),
+    enrolled: Number(progress[0]?.enrolled ?? 0),
+  };
+}
+
+export async function saveActivity(moduleId, row) {
+  const fields = { module_id: moduleId, kind: row.kind, title: row.title.trim(), prompt: row.prompt.trim(), spec: row.spec, published: Boolean(row.published) };
+  const client = api();
+  const query = row.id
+    ? client.from('learning_activities').update(fields).eq('id', row.id)
+    : client.from('learning_activities').insert({ ...fields, position: Number(row.position) || 0 });
+  return unwrap(await query.select('id').single());
+}
+
+export const setActivityPublished = (id, published) => api().from('learning_activities').update({ published }).eq('id', id).then(unwrap);
+export const deleteActivity = (id) => api().from('learning_activities').delete().eq('id', id).then(unwrap);

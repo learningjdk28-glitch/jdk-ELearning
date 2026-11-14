@@ -107,7 +107,8 @@ test('quiz selection varies with level and returns 3 questions', () => {
   }
 });
 
-import { ACTIVITIES, passwordChecks } from '../src/data/activities.js';
+import { ACTIVITIES } from '../src/data/activities.js';
+import { passwordChecks } from '../src/lib/activityRules.js';
 import { LEARNING_MODES } from '../src/data/course.js';
 
 test('all four learning modes are available', () => {

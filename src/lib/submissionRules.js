@@ -84,6 +84,19 @@ export function submissionStatus(assignment, submission, now = new Date()) {
 }
 
 /** "Due in 3 days", "Due in 5 hours", "Was due 2 days ago". */
+/** 'none' (no deadline), 'open', 'late' (past due, late work accepted) or 'closed'. */
+export function deadlineState(dueAt, allowLate = true, now = new Date()) {
+  if (!dueAt) return 'none';
+  if (now <= new Date(dueAt)) return 'open';
+  return allowLate ? 'late' : 'closed';
+}
+
+/** An ISO time as the value of a datetime-local input, in the viewer's time zone. */
+export function toLocalInput(iso) {
+  const d = new Date(iso);
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+
 export function dueLabel(dueAt, now = new Date()) {
   const ms = new Date(dueAt) - now;
   const abs = Math.abs(ms);

@@ -3,10 +3,9 @@ import { Link } from 'react-router-dom';
 import { HardDrive, Inbox, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import { listManagedCourses, listModules } from '../services/lms.js';
 import { assignmentError, deleteAssignment, listAssignmentsAdmin, saveAssignment, storageUsage } from '../services/assignments.js';
-import { PLAN_STORAGE_BYTES, SUBMISSION_KINDS, dueLabel, formatBytes } from '../lib/submissionRules.js';
+import { PLAN_STORAGE_BYTES, SUBMISSION_KINDS, dueLabel, formatBytes, toLocalInput } from '../lib/submissionRules.js';
 import { AdminHeading, Empty, Notice, Status, panel } from '../components/AdminUI.jsx';
 
-const toLocalInput = (iso) => { const d = new Date(iso); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
 const weekFromNow = () => { const d = new Date(Date.now() + 7 * 86400000); d.setHours(23, 59, 0, 0); return toLocalInput(d.toISOString()); };
 const blank = () => ({ id: null, title: '', module_id: '', instructions: '', due_at: weekFromNow(), allow_late: true, max_points: 100, submission_types: ['link', 'file'], published: false });
 

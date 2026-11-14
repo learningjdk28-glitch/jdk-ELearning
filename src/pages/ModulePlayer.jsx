@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, ClipboardCheck, ExternalLink, FileText, Lock, PartyPopper } from 'lucide-react';
 import useLoad from '../hooks/useLoad.js';
-import { loadModule, markPageRead } from '../services/learn.js';
+import { completeActivity, loadModule, markPageRead } from '../services/learn.js';
+import { deadlineState, dueLabel } from '../lib/submissionRules.js';
 import { openMaterial } from '../services/materials.js';
 import { moduleState } from '../lib/learningPath.js';
 import { MODULE_PAGE_COUNT } from '../lib/courseRules.js';
@@ -47,7 +48,7 @@ export default function ModulePlayer() {
       <Stepper pages={pages} done={data.done} index={onCheck ? -1 : index} onCheck={onCheck} state={state} goPage={goPage} goCheck={goCheck} />
 
       {onCheck ? (
-        <CheckStep data={data} state={state} courseId={courseId} goPage={goPage} nextModule={nextModule} />
+        <CheckStep data={data} setData={setData} state={state} courseId={courseId} goPage={goPage} nextModule={nextModule} />
       ) : (
         <PageStep key={pages[index].id} data={data} index={index} setData={setData}
           onPrev={index > 0 ? () => goPage(index - 1) : null}
@@ -149,7 +150,7 @@ function PageStep({ data, index, setData, onPrev, onNext, isLast }) {
   );
 }
 
-function CheckStep({ data, state, courseId, goPage, nextModule }) {
+function CheckStep({ data, setData, state, courseId, goPage, nextModule }) {
   const unread = data.module.pages.map((p, i) => ({ p, i })).filter(({ p }) => !data.done.has(p.id));
   const quizzes = data.module.quizzes;
   return (
@@ -175,31 +176,51 @@ function CheckStep({ data, state, courseId, goPage, nextModule }) {
 
       {quizzes.map((quiz) => {
         const passed = data.passed.has(quiz.id);
+        const deadline = deadlineState(quiz.due_at, quiz.allow_late);
         return (
           <section key={quiz.id} className="panel p-5 flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-text-muted">Quiz · pass mark {quiz.pass_mark}%</p>
               <p className="font-bold text-text mt-1">{quiz.title}</p>
+              {quiz.due_at && !passed && (
+                <p className={`text-sm mt-1 ${deadline === 'open' ? 'text-text-muted' : deadline === 'late' ? 'text-warning' : 'text-danger'}`}>
+                  {deadline === 'closed' ? 'Closed: the deadline has passed' : `${dueLabel(quiz.due_at)}${deadline === 'late' ? ' · late attempts are marked late' : ''}`}
+                </p>
+              )}
             </div>
             {passed ? <span className="inline-flex items-center gap-1 rounded-full bg-success/10 text-success px-3 py-1.5 font-bold text-sm"><Check size={16} aria-hidden="true" /> Passed</span>
               : unread.length > 0 ? <span className="inline-flex items-center gap-1 text-text-muted text-sm"><Lock size={16} aria-hidden="true" /> Locked</span>
+              : deadline === 'closed' ? <Link className="secondary" to={`/learn/${encodeURIComponent(courseId)}/quiz/${quiz.id}`}>See attempts</Link>
               : <Link className="primary" to={`/learn/${encodeURIComponent(courseId)}/quiz/${quiz.id}`}><ClipboardCheck size={16} aria-hidden="true" /> Start quiz</Link>}
           </section>
         );
       })}
 
-      {data.activities.map((a) => (
-        <div key={a.id}>
-          <p className="text-sm font-semibold text-text-muted mb-2">Practice activity (not graded)</p>
-          <Activity activity={{ type: a.kind, title: a.title, prompt: a.prompt, ...a.spec }} />
-        </div>
-      ))}
+      {data.activities.map((a) => <ModuleActivity key={a.id} activity={a} done={data.activitiesDone.has(a.id)} setData={setData} />)}
 
       <CourseAssignments courseId={courseId} moduleId={data.module.id} title="Assignments for this module" />
       {data.materials.length > 0 && <Materials files={data.materials} />}
       {quizzes.length === 0 && data.activities.length === 0 && !state.complete && unread.length === 0 && (
         <p className="text-text-muted">This module has no quiz. You have finished it.</p>
       )}
+    </div>
+  );
+}
+
+/** A practice activity; the first fully correct try is saved as completed. */
+function ModuleActivity({ activity, done, setData }) {
+  const [saveError, setSaveError] = useState('');
+  const onComplete = useCallback(() => {
+    if (done) return;
+    completeActivity(activity.id)
+      .then(() => setData((d) => ({ ...d, activitiesDone: new Set([...d.activitiesDone, activity.id]) })))
+      .catch((e) => setSaveError(e.message.includes('internet') ? 'Well done! You are offline, so this was not saved as completed. Do it again when you are back online.' : e.message));
+  }, [activity.id, done, setData]);
+  return (
+    <div>
+      <p className="text-sm font-semibold text-text-muted mb-2">Practice activity (not graded)</p>
+      <Activity activity={{ id: activity.id, type: activity.kind, title: activity.title, prompt: activity.prompt, ...activity.spec }} done={done} onComplete={onComplete} />
+      {saveError && <p role="alert" className="mt-2 text-sm text-danger">{saveError}</p>}
     </div>
   );
 }

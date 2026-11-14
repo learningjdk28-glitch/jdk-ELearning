@@ -100,7 +100,7 @@ test('a new level can be added without a migration (super administrator)', async
 
 test("only the owner edits pages, variants, glossary and activities; others can't see drafts", async () => {
   await as(T1, () => q(`insert into public.glossary_terms (course_id, slug, term, definition) values ('t1', 'router', 'router', 'Forwards data')`));
-  await as(T1, () => q(`insert into public.learning_activities (module_id, kind, title, spec) values ('${mod}', 'sort', 'Sort', '{"groups":["A"],"items":[]}')`));
+  await as(T1, () => q(`insert into public.learning_activities (module_id, kind, title, spec) values ('${mod}', 'sort', 'Sort', '{"groups":["A","B"],"items":[{"id":"a","label":"x","group":"A"},{"id":"b","label":"y","group":"B"}]}')`));
   await assert.rejects(as(T2, () => q(`insert into public.glossary_terms (course_id, slug, term, definition) values ('t1', 'x', 'x', 'y')`)), /row-level security/);
   assert.equal((await as(T2, () => q(`update public.learning_unit_variants set content = 'hacked' returning unit_id`))).length, 0);
   assert.equal((await as(T2, () => q(`select * from public.learning_activities where module_id = '${mod}'`))).length, 0, 'unpublished activity hidden');

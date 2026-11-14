@@ -87,15 +87,3 @@ export const ACTIVITIES = {
     ],
   },
 };
-
-/** Rules shown by the password activity. Pure function so it can be tested. */
-export function passwordChecks(password) {
-  const words = password.trim().split(/[\s\-_.]+/).filter((w) => w.length >= 3);
-  const common = /^(password|123456|qwerty|letmein|welcome|iloveyou|admin|abc123)/i;
-  return [
-    { id: 'len', label: 'At least 12 characters', ok: password.length >= 12 },
-    { id: 'mix', label: 'Mixes letters with numbers or symbols, or is a phrase of 4 or more words', ok: (/[a-z]/i.test(password) && /[0-9]/.test(password) && /[^a-z0-9]/i.test(password)) || words.length >= 4 },
-    { id: 'common', label: 'Does not start with a very common password', ok: password.length > 0 && !common.test(password) },
-    { id: 'repeat', label: 'Not just repeated characters', ok: password.length > 0 && !/^(.)\1+$/.test(password) },
-  ];
-}

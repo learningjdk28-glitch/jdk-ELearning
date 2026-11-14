@@ -33,6 +33,7 @@ import CoursePretest from './pages/CoursePretest.jsx';
 import AdminPretest from './pages/AdminPretest.jsx';
 import AssignmentPage from './pages/AssignmentPage.jsx';
 import AdminAssignments from './pages/AdminAssignments.jsx';
+import AdminActivities from './pages/AdminActivities.jsx';
 import AdminSubmissions from './pages/AdminSubmissions.jsx';
 import AdminContent from './pages/AdminContent.jsx';
 import StudentMaterials from './pages/StudentMaterials.jsx';
@@ -102,6 +103,7 @@ export default function App() {
         <Route path="/admin/glossary" element={<RequireRole role="admin"><AdminGlossary /></RequireRole>} />
         <Route path="/admin/pretest" element={<RequireRole role="admin"><AdminPretest /></RequireRole>} />
         <Route path="/admin/assignments" element={<RequireRole role="admin"><AdminAssignments /></RequireRole>} />
+        <Route path="/admin/activities" element={<RequireRole role="admin"><AdminActivities /></RequireRole>} />
         <Route path="/admin/assignments/:assignmentId" element={<RequireRole role="admin"><AdminSubmissions /></RequireRole>} />
       </Route>
 

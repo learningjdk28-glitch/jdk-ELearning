@@ -76,17 +76,18 @@ export async function loadModule(courseId, moduleId) {
     client.from('learning_units').select('id,title,kind,content,position').eq('module_id', moduleId).eq('published', true).order('position').then(unwrap),
     client.from('learning_levels').select('id,label,student_label,position,is_default').order('position').then(unwrap),
     client.from('learning_activities').select('id,kind,title,prompt,spec,position').eq('module_id', moduleId).eq('published', true).order('position').then(unwrap),
-    client.from('learning_quizzes').select('id,title,pass_mark').eq('module_id', moduleId).eq('published', true).then(unwrap),
+    client.from('learning_quizzes').select('id,title,pass_mark,due_at,allow_late').eq('module_id', moduleId).eq('published', true).then(unwrap),
     getMaterials(moduleId).then((rows) => rows.filter((f) => f.published)),
     client.from('glossary_terms').select('slug,term,definition,simple,example').eq('course_id', courseId).then(unwrap),
     client.from('learning_modules').select('id,title,position').eq('course_id', courseId).eq('published', true).order('position').then(unwrap),
     client.from('pretest_attempts').select('level_id').eq('course_id', courseId).eq('stage', 'pre').order('submitted_at', { ascending: false }).limit(1).then(unwrap),
   ]);
   const pageIds = pages.map((p) => p.id);
-  const [variants, completions, attempts] = await Promise.all([
+  const [variants, completions, attempts, activityDone] = await Promise.all([
     inList(client.from('learning_unit_variants').select('unit_id,level_id,content'), 'unit_id', pageIds).then(unwrap),
     inList(client.from('unit_completions').select('unit_id'), 'unit_id', pageIds).then(unwrap),
     inList(client.from('learning_quiz_attempts').select('quiz_id,passed,score').eq('passed', true), 'quiz_id', quizzes.map((q) => q.id)).then(unwrap),
+    inList(client.from('activity_completions').select('activity_id'), 'activity_id', activities.map((a) => a.id)).then(unwrap),
   ]);
   return {
     module: { ...mod, pages, quizzes },
@@ -94,8 +95,12 @@ export async function loadModule(courseId, moduleId) {
     placementLevel: placement[0]?.level_id || null,
     done: new Set(completions.map((c) => c.unit_id)),
     passed: new Set(attempts.map((a) => a.quiz_id)),
+    activitiesDone: new Set(activityDone.map((a) => a.activity_id)),
   };
 }
+
+/** Records that the student finished an activity (first time only). */
+export const completeActivity = (activityId) => api().rpc('complete_activity', { p_activity: activityId }).then(unwrap);
 
 /** Records that the signed-in student read a page. Safe to call twice. */
 export async function markPageRead(unitId) {
