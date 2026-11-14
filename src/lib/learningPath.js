@@ -4,10 +4,12 @@ import { MODULE_PAGE_COUNT } from './courseRules.js';
 //
 // A module is DONE when all MODULE_PAGE_COUNT pages are read and every published quiz in it is passed.
 // Its quiz unlocks after the last page. Course status of each module:
-//   done    - finished
-//   current - the first module that is not finished (where "Continue" goes)
-//   next    - the module after the current one
-//   later   - everything after that (still openable; order is a recommendation, not a lock)
+//   done       - finished
+//   tested-out - skipped thanks to the pre-test (counts as finished; open any time to review)
+//   current    - the first module that is not finished (where "Continue" goes)
+//   next       - the module after the current one
+//   later      - everything after that (still openable; order is a recommendation, not a lock)
+// When the course has a pre-test the student has not taken yet, "Continue" goes to the pre-test first.
 
 /** State of one module. `done` = Set of completed page ids, `passed` = Set of passed quiz ids. */
 export function moduleState(module, done, passed) {
@@ -31,22 +33,39 @@ export function moduleState(module, done, passed) {
   };
 }
 
-/** Path through one course: module states, statuses, overall percent and where "Continue" goes. */
-export function coursePath(modules, done, passed) {
+/**
+ * Path through one course: module states, statuses, overall percent and where "Continue" goes.
+ * placement = { testedOut: Set<moduleId>, pretest: 'none' | 'todo' | 'done' } (all optional).
+ */
+export function coursePath(modules, done, passed, placement = {}) {
+  const testedOut = placement.testedOut || new Set();
   const ordered = [...modules].sort((a, b) => a.position - b.position);
-  const states = ordered.map((m) => ({ module: m, ...moduleState(m, done, passed) }));
-  const current = states.findIndex((s) => !s.complete);
-  const next = current < 0 ? -1 : states.findIndex((s, i) => i > current && !s.complete);
-  const items = states.map((s, i) => ({ ...s, status: s.complete ? 'done' : i === current ? 'current' : i === next ? 'next' : 'later' }));
+  const states = ordered.map((m) => {
+    const s = { module: m, ...moduleState(m, done, passed) };
+    const skipped = !s.complete && testedOut.has(m.id);
+    return { ...s, testedOut: skipped, finishedLike: s.complete || skipped, unitsDone: skipped ? s.units : s.unitsDone };
+  });
+  const pretestFirst = placement.pretest === 'todo';
+  const current = states.findIndex((s) => !s.finishedLike);
+  const next = current < 0 ? -1 : states.findIndex((s, i) => i > current && !s.finishedLike);
+  // While the pre-test is waiting it is the one "you are here" step; the first module is "up next".
+  const status = (s, i) => {
+    if (s.complete) return 'done';
+    if (s.testedOut) return 'tested-out';
+    if (pretestFirst) return i === current ? 'next' : 'later';
+    return i === current ? 'current' : i === next ? 'next' : 'later';
+  };
+  const items = states.map((s, i) => ({ ...s, status: status(s, i) }));
   const units = items.reduce((n, s) => n + s.units, 0);
   const unitsDone = items.reduce((n, s) => n + s.unitsDone, 0);
   const target = current < 0 ? null : items[current];
   return {
     items,
     percent: units ? Math.round((unitsDone / units) * 100) : 0,
-    modulesDone: items.filter((s) => s.complete).length,
+    modulesDone: items.filter((s) => s.finishedLike).length,
     finished: items.length > 0 && current < 0,
-    continue: target && {
+    pretest: placement.pretest || 'none',
+    continue: pretestFirst ? { kind: 'pretest', title: 'Pre-test', moduleId: null, page: null, quizId: null } : target && {
       moduleId: target.module.id,
       title: target.module.title,
       kind: target.nextPage >= 0 ? 'page' : 'quiz',
@@ -59,6 +78,7 @@ export function coursePath(modules, done, passed) {
 /** Human description of where a module stands, for screen readers and small labels. */
 export function moduleSummary(state) {
   if (state.complete) return 'Done';
+  if (state.testedOut) return 'Tested out by your pre-test. Open it any time to review.';
   if (state.assessment === 'ready') return 'Pages done — quiz next';
   if (state.pagesDone === 0) return 'Not started';
   return `Page ${state.pagesDone} of ${state.pagesTotal} read`;

@@ -9,7 +9,7 @@ function api() {
 }
 
 /** Content levels, default level included. Non-default levels are the optional page versions. */
-export const listLevels = () => api().from('learning_levels').select('id,label,student_label,position,is_default').order('position').then(unwrap);
+export const listLevels = () => api().from('learning_levels').select('id,label,student_label,position,is_default,min_score').order('position').then(unwrap);
 
 export async function listVariants(unitIds) {
   if (!unitIds.length) return [];
@@ -64,3 +64,36 @@ export async function saveGlossaryTerm(courseId, row) {
 }
 
 export const deleteGlossaryTerm = (id) => api().from('glossary_terms').delete().eq('id', id).then(unwrap);
+
+// ---- Pre-test authoring (course owner) ----
+export async function getPretestAdmin(courseId) {
+  const client = api();
+  const [course, questions, modules] = await Promise.all([
+    client.from('courses').select('id,title,pretest_published,pretest_pass_mark').eq('id', courseId).single().then(unwrap),
+    client.from('pretest_questions').select('id,module_id,prompt,options,correct_index,competency,difficulty,explanation,position').eq('course_id', courseId).order('position').then(unwrap),
+    client.from('learning_modules').select('id,title,position,published').eq('course_id', courseId).order('position').then(unwrap),
+  ]);
+  return { course, questions, modules };
+}
+
+export async function savePretestQuestion(courseId, row) {
+  const fields = {
+    course_id: courseId,
+    module_id: row.module_id,
+    prompt: row.prompt.trim(),
+    options: row.options.map((o) => o.trim()),
+    correct_index: row.correct_index,
+    competency: row.competency === '' || row.competency == null ? null : Number(row.competency),
+    difficulty: row.difficulty === '' || row.difficulty == null ? null : Number(row.difficulty),
+    explanation: (row.explanation || '').trim(),
+    position: Number(row.position) || 0,
+  };
+  const client = api();
+  const query = row.id ? client.from('pretest_questions').update(fields).eq('id', row.id) : client.from('pretest_questions').insert(fields);
+  return unwrap(await query.select().single());
+}
+
+export const deletePretestQuestion = (id) => api().from('pretest_questions').delete().eq('id', id).then(unwrap);
+
+export const setPretestSettings = (courseId, fields) =>
+  api().from('courses').update(fields).eq('id', courseId).select('id,pretest_published,pretest_pass_mark').single().then(unwrap);

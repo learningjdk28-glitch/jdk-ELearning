@@ -13,7 +13,7 @@ export default function Path() {
   if (error) return <ErrorState error={error} onRetry={reload} />;
 
   const courses = data.courses
-    .map((c) => ({ ...c, path: coursePath(c.modules, data.done, data.passed) }))
+    .map((c) => ({ ...c, path: coursePath(c.modules, data.done, data.passed, c.placement) }))
     // Courses in progress first, then not started, then finished.
     .sort((a, b) => rank(a.path) - rank(b.path));
 

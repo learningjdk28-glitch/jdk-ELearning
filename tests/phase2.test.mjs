@@ -92,7 +92,8 @@ test('level variants are optional extras; the default level is the page itself',
 });
 
 test('a new level can be added without a migration (super administrator)', async () => {
-  await as(SUPER, () => q(`insert into public.learning_levels (id, label, student_label, position) values ('expert', 'Expert', 'Challenge me', 4)`));
+  // Since Phase 4 a level also states the pre-test score it starts at (unique per level).
+  await as(SUPER, () => q(`insert into public.learning_levels (id, label, student_label, position, min_score) values ('expert', 'Expert', 'Challenge me', 4, 95)`));
   await assert.rejects(as(T1, () => q(`insert into public.learning_levels (id, label, position) values ('x2', 'X', 5)`)), /row-level security/);
   await q(`delete from public.learning_levels where id = 'expert'`);
 });

@@ -87,7 +87,9 @@ function PageStep({ data, index, setData, onPrev, onNext, isLast }) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const levels = availableLevels(page.id, data.variants, data.levels);
-  const { content, levelId } = pickVersion(page, data.variants, chosen, data.levels);
+  // The pre-test placement picks the starting version; the student can always switch.
+  const { content, levelId } = pickVersion(page, data.variants, chosen ?? data.placementLevel, data.levels);
+  const placed = data.placementLevel && levels.find((l) => l.id === data.placementLevel);
 
   async function next() {
     setSaveError('');
@@ -118,7 +120,10 @@ function PageStep({ data, index, setData, onPrev, onNext, isLast }) {
 
       {levels.length > 1 && (
         <fieldset className="mt-4">
-          <legend className="text-sm font-semibold text-text-muted mb-2">Show this page as</legend>
+          <legend className="text-sm font-semibold text-text-muted mb-2">
+            Show this page as
+            {placed && chosen === null && <span className="font-normal"> — your pre-test picked "{levelName(placed)}". You can switch any time.</span>}
+          </legend>
           <div className="inline-flex flex-wrap rounded-2xl border border-border bg-surface-muted p-1 gap-1">
             {levels.map((l) => (
               <label key={l.id} className={`cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold ${levelId === l.id ? 'bg-surface-raised text-brand shadow-sm' : 'text-text-muted'}`}>

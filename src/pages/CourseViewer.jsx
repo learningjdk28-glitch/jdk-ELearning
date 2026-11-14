@@ -29,7 +29,7 @@ export default function CourseViewer() {
     try { await enrollMe(courseId); await reload(); } catch (e) { setEnrollError(e.message); } finally { setBusy(false); }
   }
 
-  const path = mine ? coursePath(mine.modules, data.done, data.passed) : null;
+  const path = mine ? coursePath(mine.modules, data.done, data.passed, mine.placement) : null;
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12">
       {back}
@@ -42,7 +42,7 @@ export default function CourseViewer() {
             <div className="flex justify-between text-sm font-semibold text-text"><span>{path.modulesDone} of {path.items.length} modules done</span><span>{path.percent}%</span></div>
             <ProgressBar percent={path.percent} label={`${course.title} progress`} />
             <div className="flex flex-wrap gap-3 pt-3">
-              {path.continue && <Link className="primary" to={continueLink(courseId, path)}>{path.percent === 0 ? 'Start the course' : 'Continue'} <ArrowRight size={16} aria-hidden="true" /></Link>}
+              {path.continue && <Link className="primary" to={continueLink(courseId, path)}>{path.continue.kind === 'pretest' ? 'Take the pre-test' : path.percent === 0 ? 'Start the course' : 'Continue'} <ArrowRight size={16} aria-hidden="true" /></Link>}
               {path.finished && <span className="inline-flex items-center gap-2 font-bold text-success"><CheckCircle2 size={18} aria-hidden="true" /> Course complete</span>}
               <Link className="secondary" to={`/glossary?course=${encodeURIComponent(courseId)}`}><Lightbulb size={16} aria-hidden="true" /> Glossary</Link>
             </div>

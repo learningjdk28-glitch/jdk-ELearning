@@ -59,7 +59,7 @@ function MyLearning() {
   if (loading) return <LoadingState label="Loading your courses..." />;
   if (error) return <ErrorState error={error} onRetry={reload} />;
 
-  const courses = data.courses.map((c) => ({ ...c, path: coursePath(c.modules, data.done, data.passed) }));
+  const courses = data.courses.map((c) => ({ ...c, path: coursePath(c.modules, data.done, data.passed, c.placement) }));
   const active = courses.find((c) => c.path.continue && c.path.percent > 0) || courses.find((c) => c.path.continue);
 
   if (courses.length === 0) {
@@ -107,7 +107,7 @@ function MyLearning() {
 
 function ContinueCard({ course, path }) {
   const c = path.continue;
-  const where = c.kind === 'quiz' ? 'Quiz next' : `Page ${c.page + 1}`;
+  const where = c.kind === 'pretest' ? 'Start with a short pre-test' : c.kind === 'quiz' ? 'Quiz next' : `Page ${c.page + 1}`;
   return (
     <Link to={continueLink(course.id, path)} className="flex items-center gap-4 rounded-3xl bg-brand text-brand-contrast p-6 shadow-lg shadow-brand/20 hover:bg-brand-strong">
       <span className="flex-1 min-w-0">
