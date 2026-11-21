@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 
 export function AdminHeading({ eyebrow, title, description, action }) {
- return <div className="flex flex-wrap items-start justify-between gap-4 mb-7"><div><p className="uppercase tracking-[.2em] text-xs font-bold text-brand mb-2">{eyebrow || 'JDK Learn / Instructor workspace'}</p><h1 className="text-3xl sm:text-4xl font-black tracking-tight text-text">{title}</h1><p className="text-text-muted mt-2 max-w-2xl">{description}</p></div>{action}</div>;
+ return <div className="flex flex-wrap items-start justify-between gap-4 mb-6"><div className="min-w-0 flex-1 basis-72"><p className="uppercase tracking-[.2em] text-xs font-bold text-brand mb-2">{eyebrow || 'Instructor workspace'}</p><h1 className="text-2xl sm:text-3xl font-black tracking-tight text-text break-words">{title}</h1>{description && <p className="text-text-muted mt-2 max-w-2xl">{description}</p>}</div>{action && <div className="shrink-0">{action}</div>}</div>;
 }
 export function Metric({ icon: Icon, label, value, hint }) {
  return <div className="rounded-2xl bg-surface-raised border border-border p-5 shadow-sm flex items-start gap-4"><div className="rounded-2xl bg-brand-soft p-3 text-brand"><Icon size={23}/></div><div><p className="text-sm text-text-muted font-medium">{label}</p><p className="text-3xl font-black text-text mt-1 tabular-nums">{value ?? '—'}</p>{hint&&<p className="text-xs text-text-muted mt-2">{hint}</p>}</div></div>;

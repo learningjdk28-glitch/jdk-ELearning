@@ -131,11 +131,10 @@ textarea {
   .field {
     @apply block w-full border border-border rounded-2xl p-3.5 mt-1 bg-surface-raised text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand;
   }
-  .navlink {
-    @apply flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-brand-soft;
-  }
-  .navlink.active {
-    @apply bg-brand-soft text-brand font-bold;
+  /* The sidebar link list on short screens: a thin scrollbar in the sidebar's own text colour. */
+  .sidebar-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--color-brand-contrast) / 0.4) transparent;
   }
   .term {
     @apply bg-brand-soft text-brand font-semibold rounded-md px-1.5 py-0.5 cursor-pointer hover:bg-brand/20;

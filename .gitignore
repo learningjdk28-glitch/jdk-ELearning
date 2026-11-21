@@ -17,3 +17,6 @@ android/capacitor-cordova-android-plugins/
 *.aab
 *.jks
 *.keystore
+
+# Filled-in copies of setup scripts (contain secrets)
+*.local.sql

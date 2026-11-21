@@ -21,7 +21,6 @@ import {
   ClipboardCheck,
   FileCheck,
   Puzzle,
-  ShieldCheck,
   Award,
   Wifi,
   WifiOff,
@@ -69,29 +68,34 @@ const ADMIN_LINKS = [
   ['/admin/profile', 'My profile', Settings],
 ];
 
+// Both portals: the sidebar is the brand colour (each person's, or the course's). brand-contrast text on brand
+// is always at least 4.5:1 (src/lib/theme.js), and the active item swaps the two colours.
+const SIDE_ITEM = 'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-contrast';
+const sideItem = (active) => `${SIDE_ITEM} ${active ? 'bg-brand-contrast text-brand shadow-sm' : 'text-brand-contrast hover:bg-brand-contrast/15'}`;
+
 function SidebarContent({ adminMode, onLogout }) {
   const links = adminMode ? ADMIN_LINKS : SIDE_LINKS;
   return (
-    <>
-      <div className={`flex items-center gap-3 text-xl font-extrabold mb-9 ${adminMode ? 'text-text-inverse' : 'text-text'}`}>
-        <span className={`rounded-xl p-2 ${adminMode ? 'bg-brand text-brand-contrast' : 'bg-brand-soft text-brand'}`}><GraduationCap size={27}/></span>
-        <div>JDK Learn <span className={`block text-xs mt-0.5 font-medium ${adminMode ? 'text-text-inverse-muted' : 'text-text-muted'}`}>{adminMode ? 'Instructor Portal' : 'Student Portal'}</span></div>
+    <div className="flex flex-col h-full min-h-0 text-brand-contrast">
+      <div className="flex items-center gap-3 px-1 mb-6 shrink-0">
+        <span className="rounded-xl p-2 bg-brand-contrast text-brand" aria-hidden="true"><GraduationCap size={24} /></span>
+        <div className="min-w-0">
+          <p className="text-lg font-extrabold leading-tight">JDK Learn</p>
+          <p className="text-xs font-medium">{adminMode ? 'Instructor Portal' : 'Student Portal'}</p>
+        </div>
       </div>
-      <nav aria-label="Main" className="space-y-1.5">
+      <nav aria-label="Main" className="flex-1 min-h-0 overflow-y-auto space-y-1 -mx-1 px-1 py-1 sidebar-scroll">
         {links.map(([path, label, Icon]) => (
-          <NavLink key={path} to={path} end={path === '/admin'} className={({ isActive }) => adminMode
-            ? `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${isActive ? 'bg-brand text-brand-contrast shadow-lg shadow-overlay/30' : 'text-text-inverse-muted hover:text-text-inverse hover:bg-text-inverse/10'}`
-            : `navlink ${isActive ? 'active' : ''}`}>
-            <Icon size={19} aria-hidden="true" /> {label}
+          <NavLink key={path} to={path} end={path === '/admin'} className={({ isActive }) => sideItem(isActive)}>
+            <Icon size={19} className="shrink-0" aria-hidden="true" /> <span className="truncate">{label}</span>
           </NavLink>
         ))}
       </nav>
-      <div className="mt-auto pt-7">
-        {adminMode && <div className="rounded-2xl bg-brand/40 p-4 mb-5 text-text-inverse"><ShieldCheck size={24} className="text-text-inverse-muted mb-2"/><p className="font-bold text-sm">Instructor workspace</p><p className="text-xs text-text-inverse-muted mt-1">Publish content, manage enrollments, and help learners grow.</p></div>}
-        <button type="button" className={adminMode ? 'flex gap-3 items-center w-full p-3 text-text-inverse-muted hover:text-text-inverse hover:bg-text-inverse/10 rounded-xl' : 'navlink w-full text-left'} onClick={onLogout}><LogOut size={19} aria-hidden="true"/> Log out</button>
-        {!adminMode && <p className="mt-4 text-xs text-text-muted">Lessons you open are saved on this device. Work done offline syncs when you reconnect.</p>}
+      <div className="shrink-0 pt-4 mt-4 border-t border-brand-contrast/25">
+        <button type="button" className={`${sideItem(false)} w-full`} onClick={onLogout}><LogOut size={19} className="shrink-0" aria-hidden="true" /> Log out</button>
+        {!adminMode && <p className="mt-3 px-1 text-xs leading-snug">Lessons you open are saved on this device. Work done offline syncs when you reconnect.</p>}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -174,15 +178,15 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen md:flex">
-      <aside className={`hidden md:flex md:flex-col border-r w-64 shrink-0 p-5 sticky top-0 h-screen overflow-y-auto ${adminMode ? 'bg-surface-inverse border-surface-inverse' : 'bg-surface-raised border-border'}`}>
+      <aside className="hidden md:flex md:flex-col w-64 shrink-0 p-4 sticky top-0 h-screen bg-brand">
         <SidebarContent adminMode={adminMode} onLogout={() => setConfirmOpen(true)} />
       </aside>
 
       {menuOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Menu">
-          <aside className={`${adminMode ? 'bg-surface-inverse text-text-inverse' : 'bg-surface-raised'} w-72 max-w-[85vw] p-5 flex flex-col overflow-y-auto shadow-2xl pt-[calc(1.25rem+env(safe-area-inset-top))]`}>
-            <button type="button" aria-label="Close menu" className="self-end p-2 -mt-2 -mr-2 mb-2 rounded-full hover:bg-brand-soft" onClick={() => setMenuOpen(false)}>
-              <X size={22} />
+          <aside className="bg-brand w-72 max-w-[85vw] h-full p-4 flex flex-col shadow-2xl pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            <button type="button" aria-label="Close menu" className="self-end p-2 -mt-1 -mr-1 mb-1 rounded-full text-brand-contrast hover:bg-brand-contrast/15 shrink-0" onClick={() => setMenuOpen(false)}>
+              <X size={22} aria-hidden="true" />
             </button>
             <SidebarContent adminMode={adminMode} onLogout={() => setConfirmOpen(true)} />
           </aside>
@@ -191,29 +195,29 @@ export default function Layout() {
       )}
 
       <div className="flex-1 min-w-0">
-        <header className={`${adminMode ? 'bg-surface-raised/95 border-border' : 'bg-surface/90 border-border'} backdrop-blur border-b px-4 md:px-9 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] flex items-center justify-between gap-3 sticky top-0 z-30`}>
-          <div className="md:hidden flex items-center gap-2 font-extrabold text-text">
-            <button type="button" aria-label="Open menu" aria-expanded={menuOpen} className="w-10 h-10 grid place-items-center rounded-full bg-surface-raised border border-border" onClick={() => setMenuOpen(true)}>
-              <Menu size={20} />
+        <header className="bg-surface/90 border-border backdrop-blur border-b px-4 md:px-8 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] flex items-center justify-between gap-2 sm:gap-3 sticky top-0 z-30 min-h-16">
+          <div className="md:hidden flex items-center gap-2 min-w-0 font-extrabold text-text">
+            <button type="button" aria-label="Open menu" aria-expanded={menuOpen} className="w-10 h-10 shrink-0 grid place-items-center rounded-full bg-surface-raised border border-border" onClick={() => setMenuOpen(true)}>
+              <Menu size={20} aria-hidden="true" />
             </button>
-            <span>JDK <span className="text-brand">Learning System</span></span>
+            <span className="truncate">JDK <span className="text-brand">Learn</span></span>
           </div>
-          <div className="hidden md:block font-bold text-lg">{adminMode ? 'JDK Learn / Instructor' : 'Learn at your own pace'}</div>
-          <div className="flex items-center gap-3 text-sm">
+          <div className="hidden md:block min-w-0 truncate font-bold text-lg text-text">{adminMode ? 'Instructor workspace' : 'Learn at your own pace'}</div>
+          <div className="flex items-center gap-2 sm:gap-3 text-sm shrink-0">
             {!adminMode && <SyncStatus online={online} />}
             <span
-              className={`flex items-center gap-1 rounded-full px-3 py-1 font-semibold ${online ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}
-              role="status"
+              className={`flex items-center gap-1 rounded-full px-2 sm:px-3 py-1 font-semibold ${online ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}
+              role="status" title={online ? 'Online' : 'Offline'}
             >
               {online ? <Wifi size={15} aria-hidden="true" /> : <WifiOff size={15} aria-hidden="true" />}
-              {online ? 'Online' : 'Offline'}
+              <span className="sr-only sm:not-sr-only">{online ? 'Online' : 'Offline'}</span>
             </span>
             <ThemeSwitch userId={user?.id} online={online} />
-            <span className="hidden lg:inline text-text-muted truncate max-w-[14rem]">{user?.email}</span>
+            <span className="hidden xl:inline text-text-muted truncate max-w-[14rem]">{user?.email}</span>
           </div>
         </header>
 
-        <main className="w-full max-w-[1680px] mx-auto p-4 sm:p-6 md:p-8 xl:p-10 pb-28 md:pb-10" key={location.pathname}>
+        <main className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 pt-5 sm:pt-6 md:pt-8 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-10" key={location.pathname}>
           <Outlet />
         </main>
       </div>
