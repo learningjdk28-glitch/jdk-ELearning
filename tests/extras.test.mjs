@@ -134,6 +134,7 @@ test('analytics views for the chatbot: current data, anonymous, read-only, nothi
   await db.exec(`insert into auth.users (id, email) values ('${S}', 'private.person@example.com')`);
   const mod = (await one(`insert into public.learning_modules (course_id, title) values ('c', 'M1') returning id`)).id;
   const unit = (await one(`insert into public.learning_units (module_id, title, content, position) values ('${mod}', 'P', 'B', 0) returning id`)).id;
+  await db.exec(`update public.learning_units set published = true where id = '${unit}'`);
   const quiz = (await one(`insert into public.learning_quizzes (module_id, title, published) values ('${mod}', 'Q', true) returning id`)).id;
   const qq = (await one(`insert into public.learning_quiz_questions (quiz_id, prompt, options, correct_index, competency) values ('${quiz}', 'Q?', '["a","b"]', 1, 2) returning id`)).id;
   await db.exec(`
