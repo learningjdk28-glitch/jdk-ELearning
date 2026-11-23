@@ -29,8 +29,8 @@ alter default privileges in schema public grant all on functions to authenticate
 `);
 await db.exec(get('supabase_setup.sql'));
 await db.exec(get('supabase_lms_upgrade.sql'));
-await db.exec(get('supabase_lms_v2.sql'));
-await db.exec(get('supabase_lms_v2.sql'));
+await db.exec(get('supabase/migrations/20261113_lms_v2.sql'));
+await db.exec(get('supabase/migrations/20261113_lms_v2.sql'));
 await db.exec('grant all on all tables in schema public,storage to authenticated,anon');
 await db.exec(`insert into auth.users (id,email) values ('${A}','admin@test.dev'),('${B}','b@test.dev'),('${C}','c@test.dev');`);
 await db.exec(`update public.profiles set role='admin' where id='${A}'`);

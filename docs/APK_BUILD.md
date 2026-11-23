@@ -1,14 +1,15 @@
 # APK build and web deploy
 
 Capacitor wraps the production web build in an Android app. The `android/` project, icons, splash screen and
-deep-link filter are already generated and committed. **The APK was not built on the machine that wrote this
-(no Java or Android SDK), so build it on yours and report any error.**
+deep-link filter are committed. Released APKs are attached to the repository's **Releases** on GitHub.
 
 App name: JDK Learning System. Application id: `ph.edu.pclu.jdklearn`. Custom URL scheme: `ph.edu.pclu.jdklearn://`.
 
 ## One-time setup (Windows)
 
-1. Install **Android Studio** (it includes the JDK 21 and Android SDK). Open it once and accept the SDK licences.
+1. Install **Android Studio** (it includes the Android SDK). Open it once and accept the SDK licences.
+   Gradle here needs **Java 17–21**: Android Studio's own Java 25 is too new. Use a JDK 21 (for example the one
+   Android Studio/IntelliJ downloads to `C:\Users\<you>\.jdks\`) and set `JAVA_HOME` to it before building.
 2. Make sure `.env` has `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (the anon key is public and is baked into the web build and APK; never use service_role).
 3. `npm install`
 
@@ -16,10 +17,10 @@ App name: JDK Learning System. Application id: `ph.edu.pclu.jdklearn`. Custom UR
 
 Supabase dashboard > Authentication > URL Configuration:
 
-- **Site URL**: your web address, for example `https://navi-learn.vercel.app`
+- **Site URL**: your web address, for example `https://jdk-elearning.learningjdk28.workers.dev`
 - **Redirect URLs**, add all of:
   - `http://localhost:5173/**` (development)
-  - `https://navi-learn.vercel.app/**` (your real web domain)
+  - `https://jdk-elearning.learningjdk28.workers.dev/**` (your real web domain)
   - `ph.edu.pclu.jdklearn://**` (the Android app)
 
 Without the last line, password-reset and confirm-email links will not open the app.
@@ -27,8 +28,7 @@ Without the last line, password-reset and confirm-email links will not open the 
 ## Build a debug APK (install on your own phone)
 
 ```bash
-npm run build:icons     # only if you change the icon art in scripts/make-icons.mjs
-npm run cap:assets      # regenerates Android launcher icons and splash from assets/
+npm run cap:assets      # only if you changed assets/icon-only.png or assets/splash.png
 npm run cap:sync        # builds the web app and copies it into android/
 cd android
 ./gradlew assembleDebug
@@ -69,13 +69,11 @@ Before each new upload, raise `versionCode` (and `versionName`) in `android/app/
 | Email links open the app | Intent filter for `ph.edu.pclu.jdklearn://` in `AndroidManifest.xml`, handled in `NativeBridge` |
 | Launcher icon and splash | Generated into `android/app/src/main/res` from `assets/` |
 
-## Web deploy (Vercel, Netlify or Cloudflare Pages)
+## Web deploy (Cloudflare Workers)
 
-1. Push the project to GitHub.
-2. Create the site, build command `npm run build`, output folder `dist`.
-3. Add the two environment variables `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
-4. Add a rewrite so every path serves `index.html` (single page app).
-   Vercel: `vercel.json` with `{ "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }`.
-   Netlify: a `public/_redirects` file containing `/* /index.html 200`.
-5. Put the final HTTPS address in the Supabase Site URL and Redirect URLs above.
-6. HTTPS is required for the service worker and "install app" on phones.
+1. Connect the GitHub repository in Cloudflare (Workers & Pages). It builds with `npm run build` and serves `dist/`
+   as described in `wrangler.jsonc`, which also sends every path to `index.html` (single page app).
+2. Under Settings > Build > Variables, add `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` and `VITE_PUBLIC_URL`.
+3. Every push to `main` redeploys.
+4. Put the final HTTPS address in the Supabase Site URL and Redirect URLs above.
+   HTTPS is required for the service worker and "install app" on phones.

@@ -169,3 +169,10 @@ test('analytics views for the chatbot: current data, anonymous, read-only, nothi
   assert.match(setting.c, /default_transaction_read_only=on/);
   assert.match(setting.c, /statement_timeout=5s/);
 });
+
+test('the setup check reports a fresh database as fully set up (except the optional and account items)', async () => {
+  const rows = (await db.query(get('supabase/checks/00_schema_check.sql'))).rows;
+  assert.ok(rows.length >= 20);
+  const failing = rows.filter((r) => !r.ok && !['optional', 'accounts'].includes(r.grp)).map((r) => `${r.grp}: ${r.item}`);
+  assert.deepEqual(failing, []);
+});

@@ -1,15 +1,17 @@
 # Credits
 
-JDK Learning System is an offline-first adaptive learning app. This file lists what it is built on.
+JDK Learning System is a learning management system for the Polytechnic College of La Union. This file lists what it is built on.
 
 ## Design
 
-- The nine screen mockups in `images-mockup/` (Welcome to Learning Path) are the UI design source supplied by the project owner.
+- The onboarding screens follow mockups supplied by the project owner.
+- Logo: the Polytechnic College of La Union seal (`assets/pclu-seal.png`).
 
 ## Content
 
-- Digital Literacy lessons and questions: `src/data/`.
-- Networking Basics lessons, activities, glossary and 48 assessment questions: `src/content/networking-basics/`. Drafted with Claude (Anthropic). A human subject-matter reviewer should check accuracy before learners use it.
+- The two starter courses (Digital Literacy, Networking Basics) are seeded into the database by
+  `supabase/migrations/20261116b_phase2_seed_bundled_courses.sql` and `20261117b_phase4_seed_dl_pretest.sql`; instructors edit them in the app.
+  They were drafted with Claude (Anthropic). A human subject-matter reviewer should check accuracy before learners use them.
 
 ## Software
 
@@ -21,8 +23,9 @@ JDK Learning System is an offline-first adaptive learning app. This file lists w
 | Tailwind CSS | Styling | MIT |
 | React Router | Navigation | MIT |
 | lucide-react | Icons | ISC |
-| Recharts | Charts | MIT |
 | Dexie | IndexedDB (offline storage) | Apache-2.0 |
+| pdf-lib, @pdf-lib/fontkit | Certificate PDFs and uploaded fonts | MIT |
+| qrcode | QR code on certificates | MIT |
 | zod | Content and input validation | MIT |
 | @supabase/supabase-js | Auth, database, realtime client | MIT |
 | Capacitor | Android app wrapper | MIT |
@@ -42,9 +45,11 @@ JDK Learning System is an offline-first adaptive learning app. This file lists w
 ## Services
 
 - Supabase: authentication and Postgres database (Row Level Security enabled).
-- Web Speech API: browser or device text to speech for Auditory mode.
+- Supabase Edge Functions and pg_cron: invitation emails.
+- Cloudflare Workers: hosting for the web app.
+- Web Speech API: device text to speech for "Listen" on module pages.
 - OpenRouter: hosts the AI models behind the chatbot (free models, tried in order).
-- Vercel: hosting for the web app.
+- Vercel: hosting for the chatbot backend (`ChatBot/vercel.json`).
 
 ## Features
 
@@ -55,8 +60,7 @@ JDK Learning System is an offline-first adaptive learning app. This file lists w
 ## Testing tools (development only)
 
 - Node.js built-in test runner.
-- PGlite: in-process Postgres used to check `supabase_setup.sql`.
-- Playwright (playwright-core) with Microsoft Edge: headless browser checks.
+- PGlite: in-process Postgres that runs every migration and checks the database rules.
 
 ## Notes
 
