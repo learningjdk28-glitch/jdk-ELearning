@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { emailSchema, passwordSchema } from '../lib/validation.js';
-import { GraduationCap } from 'lucide-react';
+import Logo from '../components/Logo.jsx';
 import PasswordInput from '../components/PasswordInput.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { Callout } from '../components/ui.jsx';
@@ -29,7 +29,7 @@ function Shell({ title, desc, portal = 'Student portal', children }) {
     <div className="min-h-screen bg-surface grid place-items-center p-4">
       <main className="w-full max-w-md bg-surface-raised border border-border rounded-3xl shadow-sm px-6 py-8 sm:px-9 sm:py-10">
         <Link to="/" className="inline-flex items-center gap-2 text-xl font-black text-text">
-          <span className="rounded-xl p-1.5 bg-brand-soft text-brand"><GraduationCap size={22} aria-hidden="true" /></span>
+          <Logo size={40} decorative />
           JDK Learn
         </Link>
         <p className="mt-6 text-xs font-bold uppercase tracking-[.16em] text-brand">{portal}</p>

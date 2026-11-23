@@ -28,6 +28,7 @@ import {
 import { useAuth } from '../context/AuthContext.jsx';
 import useOnline from '../hooks/useOnline.js';
 import ChatWidget from './ChatWidget.jsx';
+import Logo from './Logo.jsx';
 import SyncStatus, { useOutbox } from './SyncStatus.jsx';
 import { applyAppearance, currentAppearance, shownMode } from '../lib/applyTheme.js';
 import { saveAppearance } from '../services/profile.js';
@@ -78,7 +79,7 @@ function SidebarContent({ adminMode, onLogout }) {
   return (
     <div className="flex flex-col h-full min-h-0 text-brand-contrast">
       <div className="flex items-center gap-3 px-1 mb-6 shrink-0">
-        <span className="rounded-xl p-2 bg-brand-contrast text-brand" aria-hidden="true"><GraduationCap size={24} /></span>
+        <Logo size={44} decorative className="ring-2 ring-brand-contrast" />
         <div className="min-w-0">
           <p className="text-lg font-extrabold leading-tight">JDK Learn</p>
           <p className="text-xs font-medium">{adminMode ? 'Instructor Portal' : 'Student Portal'}</p>
@@ -200,6 +201,7 @@ export default function Layout() {
             <button type="button" aria-label="Open menu" aria-expanded={menuOpen} className="w-10 h-10 shrink-0 grid place-items-center rounded-full bg-surface-raised border border-border" onClick={() => setMenuOpen(true)}>
               <Menu size={20} aria-hidden="true" />
             </button>
+            <Logo size={30} decorative />
             <span className="truncate">JDK <span className="text-brand">Learn</span></span>
           </div>
           <div className="hidden md:block min-w-0 truncate font-bold text-lg text-text">{adminMode ? 'Instructor workspace' : 'Learn at your own pace'}</div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, GraduationCap } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import Logo from '../components/Logo.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
 // Onboarding in four steps, following the "JDK Learn Onboarding Redesign" mockups:
@@ -143,7 +144,7 @@ export default function Welcome() {
   return (
     <div className="min-h-screen flex flex-col px-6 sm:px-8 py-4 sm:py-8">
       <header className="w-full max-w-md lg:max-w-5xl mx-auto flex items-center justify-between h-10">
-        {step > 0 ? <span className="font-extrabold text-xl text-text">JDK <span className="text-brand">Learn</span></span> : <span />}
+        {step > 0 ? <span className="flex items-center gap-2 font-extrabold text-xl text-text"><Logo size={36} decorative />JDK <span className="text-brand">Learn</span></span> : <span />}
         {step > 0 && !last && (
           <button className="font-semibold text-text-muted hover:text-brand min-h-[44px] px-2" onClick={finish}>Skip</button>
         )}
@@ -155,9 +156,7 @@ export default function Welcome() {
         {step === 0 ? (
           <>
             <div className="text-center lg:text-left lg:order-2">
-              <span className="inline-grid place-items-center w-16 h-16 sm:w-20 sm:h-20 rounded-[1.4rem] bg-brand text-brand-contrast" aria-hidden="true">
-                <GraduationCap size={38} />
-              </span>
+              <Logo size={96} className="inline-block shadow-md" />
               <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight mt-5 text-text">
                 JDK <span className="text-brand">Learn</span>
               </h1>

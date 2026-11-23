@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { BadgeCheck, CircleAlert, Search, ShieldX } from 'lucide-react';
 import { verifyCertificate } from '../services/certificates.js';
 import { formatIssued } from '../lib/certificateRules.js';
+import Logo from '../components/Logo.jsx';
 
 const CODE = /^JDK-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$/;
 
@@ -27,7 +28,7 @@ export default function VerifyCertificate() {
     <main className="min-h-screen bg-surface px-4 py-10">
       <div className="max-w-xl mx-auto space-y-6">
         <header className="text-center">
-          <Link to="/" className="font-extrabold text-text">JDK <span className="text-brand">Learning System</span></Link>
+          <Link to="/" className="inline-flex flex-col items-center gap-2 font-extrabold text-text"><Logo size={64} decorative />JDK <span className="text-brand -mt-2">Learning System</span></Link>
           <h1 className="text-3xl font-black text-text mt-4">Check a certificate</h1>
           <p className="text-text-muted mt-2">Enter the certificate ID printed on the certificate, for example JDK-1A2B-3C4D-5E6F.</p>
         </header>
