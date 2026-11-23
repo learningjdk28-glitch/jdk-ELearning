@@ -20,3 +20,6 @@ android/capacitor-cordova-android-plugins/
 
 # Filled-in copies of setup scripts (contain secrets)
 *.local.sql
+
+# Android release signing (passwords)
+android/keystore.properties

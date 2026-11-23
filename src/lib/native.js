@@ -2,7 +2,7 @@ import { Capacitor } from '@capacitor/core';
 
 // Custom URL scheme registered by the Android app (see docs/APK_BUILD.md). Supabase email links
 // (password reset, confirm email) open the app through it.
-export const APP_SCHEME = 'com.navilearn.app';
+export const APP_SCHEME = 'ph.edu.pclu.jdklearn';
 
 export const isNative = () => Capacitor.isNativePlatform();
 

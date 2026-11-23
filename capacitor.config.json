@@ -1,5 +1,5 @@
 {
-  "appId": "com.navilearn.app",
+  "appId": "ph.edu.pclu.jdklearn",
   "appName": "JDK Learning System",
   "webDir": "dist",
   "server": {

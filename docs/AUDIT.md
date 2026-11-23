@@ -18,7 +18,7 @@ Audited before this pass (state after the mockup redesign). Status words: **work
 | Login | Email, password, Log in | Supabase sign-in | working | auth.users | Offline banner added |
 | Login | Forgot password link | Open reset page | working | none | none |
 | Register | Name, email, passwords, Create account | Sign up, create profile | working in the app, **no profile table or trigger existed** | auth.users, profiles | Trigger creates profile (role forced to learner) |
-| Register | Confirm email link | Return to the app | broken on Android (web URL only) | auth | `emailRedirectTo` is web URL or `com.navilearn.app://login` |
+| Register | Confirm email link | Return to the app | broken on Android (web URL only) | auth | `emailRedirectTo` is web URL or `ph.edu.pclu.jdklearn://login` |
 | Forgot password | Send reset link | Email a link | working on web, **broken in APK** | auth | Redirect per platform, deep link in manifest |
 | Reset password | Update password | Set new password | working on web, broken in APK | auth | `NativeBridge` reads the link tokens and signs the user in |
 | Dashboard | Course card, 4 tiles, competency bars | Navigate, show real scores | working (local) | attempts (local) | none |

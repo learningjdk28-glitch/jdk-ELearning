@@ -20,12 +20,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Supabase email links (password reset, confirm email) open the app: com.navilearn.app://... -->
+            <!-- Supabase email links (password reset, confirm email) open the app: ph.edu.pclu.jdklearn://... -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="com.navilearn.app" />
+                <data android:scheme="ph.edu.pclu.jdklearn" />
             </intent-filter>
         </activity>
 

@@ -1,4 +1,4 @@
-package com.navilearn.app;
+package ph.edu.pclu.jdklearn;
 
 import com.getcapacitor.BridgeActivity;
 
